@@ -192,6 +192,49 @@ static inline bool is_enterprise_sec(wifi_security_modes_t mode)
         mode == wifi_security_mode_wpa3_enterprise;
 }
 
+#ifdef CONFIG_NO_MLD_ONLY_PRIVATE
+#define MLD_UNIT_COUNT 8
+#else
+#define MLD_UNIT_COUNT 1
+#endif /* CONFIG_NO_MLD_ONLY_PRIVATE */
+
+/*
+    if (isVapPrivate(vap_index)) {
+        *subdoc = PRIVATE;
+
+    MAX_NUM_MLD_LINKS
+*/
+#if 0
+static void dlm_update_mld_mac()
+{
+    unsigned int num_radios = get_num_radio_dml();
+    unsigned int num_vaps = num_radios * MAX_NUM_VAP_PER_RADIO;
+    unsigned char *mld_addr_map[MLD_UNIT_COUNT] = {0};
+    //mac_address_t mlo_mac = {0};
+    //mac_address_t zero_mac = {0};
+    char m[30];
+    unsigned int i = 0;
+
+    {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "ApplyAccessPointSettings 3xxx pid:%d\n", getpid()); fflush(out);fclose(out);}
+    wifi_util_info_print(WIFI_DB,"%s:%d Stano: ApplyAccessPointSettings\n",__func__, __LINE__);
+    //vapInfo->u.bss_info.mld_info.common_info.mld_link_id
+    memset(mld_addr_map, 0, sizeof(mld_addr_map));
+
+    for (i = 0; i < num_vaps; i++) {
+        wifi_vap_info_t *vapInfo = (wifi_vap_info_t *) get_dml_cache_vap_info(i);
+
+        if (vapInfo == NULL) {
+            continue;
+        }
+        if (isVapSTAMesh(vapInfo->vap_index))
+            continue;
+        (void)to_mac_str(vapInfo->u.bss_info.bssid, m);
+        {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "ApplyAccessPointSettings x- vap_index:%d mac: %s - 0x%2X 0x%2X\n",
+            vapInfo->vap_index, m, vapInfo->u.bss_info.bssid[0], 3); fflush(out);fclose(out);}
+        wifi_util_info_print(WIFI_DB,"%s:%d Stano: ApplyAccessPointSettings- vap_index:%d mac: %s\n",__func__, __LINE__, vapInfo->vap_index, m);
+    }
+}
+#endif
 /***********************************************************************
 
  APIs for Object:
@@ -835,6 +878,8 @@ WiFi_SetParamBoolValue
     UNREFERENCED_PARAMETER(hInsContext);
     wifi_global_config_t *global_wifi_config;
     global_wifi_config = (wifi_global_config_t*) get_dml_cache_global_wifi_config();
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d Stano ApplyAccessPointSettings \n",__func__, __LINE__);
+    wifi_util_info_print(WIFI_DB,"%s:%d Stano: ApplyAccessPointSettings 1\n",__func__, __LINE__);
 
     if (global_wifi_config == NULL)
     {
@@ -871,6 +916,7 @@ WiFi_SetParamBoolValue
     if (AnscEqualString(ParamName, "ApplyAccessPointSettings", TRUE ))
     {
         if (bValue == TRUE){
+            //dlm_update_mld_mac(); //Stano: add here regeneration of mld_addr?
             wifi_util_dbg_print(WIFI_DMCLI,"%s:%d ApplyAccessPointSettings push to queue \n",__func__, __LINE__);
             if (push_vap_dml_cache_to_one_wifidb() == RETURN_ERR)
             {
@@ -7858,7 +7904,7 @@ AccessPoint_SetParamUlongValue
         set_dml_cache_vap_config_changed(instance_number - 1);
         return TRUE;
     }
-
+    //Stano: mld_link_id
     if( AnscEqualString(ParamName, "MLD_Link_ID", TRUE))
     {
         if ( vapInfo->u.bss_info.mld_info.common_info.mld_link_id == (unsigned int)uValue )
