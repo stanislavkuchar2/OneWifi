@@ -142,6 +142,16 @@ UINT get_num_radio_dml()
     }
 }
 
+UINT get_total_num_affiliated_ap_dml()
+{
+    return 3;
+}
+
+UINT get_total_num_apmld_dml()
+{
+    return 8;
+}
+
 UINT get_total_num_vap_dml()
 {
     webconfig_dml_t* pwebconfig = get_webconfig_dml();

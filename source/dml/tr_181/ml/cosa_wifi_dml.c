@@ -196,6 +196,981 @@ static inline bool is_enterprise_sec(wifi_security_modes_t mode)
 
  APIs for Object:
 
+    Device.WiFi.DataElements.Network.Device.{i}.Radio.{i}.
+    *  MLO_Radio_GetEntryCount
+    *  MLO_Radio_GetEntry
+
+***********************************************************************/
+ULONG
+MLO_Radio_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: Number of radio:%d\n",__func__, __LINE__, get_num_radio_dml());
+    return get_num_radio_dml();
+}
+
+ANSC_HANDLE
+MLO_Radio_GetEntry
+    (
+        ANSC_HANDLE                 hInsContext,
+        ULONG                       nIndex,
+        ULONG*                      pInsNumber
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: nIndex:%ld\n",__func__, __LINE__, nIndex);
+    if ( nIndex < (UINT)get_num_radio_dml() )
+    {
+        *pInsNumber = nIndex + 1;
+        g_radio_instance_num = nIndex + 1;
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: g_radio_instance_num:%d\n",__func__, __LINE__, g_radio_instance_num); 
+        last_radio_change = AnscGetTickInSeconds();
+
+        return (ANSC_HANDLE)(nIndex + 1);
+    }
+
+    return NULL;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.Radio.{i}.Capabilities.WiFi7APRole
+
+    *  WiFi7APRole_GetParamBoolValue
+    *  WiFi7APRole_SetParamBoolValue
+
+***********************************************************************/
+
+BOOL
+WiFi7APRole_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+    ULONG radio_index = (ULONG)hInsContext - 1;
+    (void)radio_index; //Artem todo
+    // wifi_radio_capabilities_t radio_capab = ((webconfig_dml_t *)get_webconfig_dml())->hal_cap.wifi_prop.radiocap[radio_index];
+    //ULONG capab_val = radio_capab.mu_mode;
+    ULONG capab_val = 0; //Artem todo
+
+    if (AnscEqualString(ParamName, "EMLMRSupport", TRUE))
+    {
+        if (capab_val & eMLMR) return TRUE;
+
+        return FALSE;
+    }
+    if (AnscEqualString(ParamName, "EMLSRSupport", TRUE))
+    {
+        if (capab_val & eMLSR) return TRUE;
+
+        return FALSE;
+    }
+    if (AnscEqualString(ParamName, "STRSupport", TRUE))
+    {
+        if (capab_val & STR) return TRUE;
+
+        return FALSE;
+    }
+    if (AnscEqualString(ParamName, "NSTRSupport", TRUE))
+    {
+        if (capab_val & NSTR) return TRUE;
+
+        return FALSE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+WiFi7APRole_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    if (AnscEqualString(ParamName, "EMLMRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "EMLSRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "NSTRSupport", TRUE))
+    {
+	    return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.Radio.{i}.Capabilities.WiFi7bSTARole
+
+    *  WiFi7bSTARole_GetParamBoolValue
+    *  WiFi7bSTARole_SetParamBoolValue
+
+***********************************************************************/
+
+BOOL
+WiFi7bSTARole_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+    if (AnscEqualString(ParamName, "EMLMRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "EMLSRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "NSTRSupport", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+WiFi7bSTARole_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    if (AnscEqualString(ParamName, "EMLMRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "EMLSRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STRSupport", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "NSTRSupport", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.APMLD.{i}.
+
+    *  APMLD_GetEntryCount
+    *  APMLD_GetEntry
+    *  APMLD_GetParamUlongValue
+    *  APMLD_GetParamStringValue
+    *  APMLD_SetParamUlongValue
+    *  APMLD_SetParamStringValue
+
+***********************************************************************/
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ULONG
+        APMLD_GetEntryCount
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to retrieve the count of the table.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The count of the table
+
+**********************************************************************/
+ULONG
+APMLD_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: total number of apmld:%d\n",__func__, __LINE__, get_total_num_apmld_dml());
+    return get_total_num_apmld_dml();
+}
+
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ANSC_HANDLE
+        APMLD_GetEntry
+            (
+                ANSC_HANDLE                 hInsContext,
+                ULONG                       nIndex,
+                ULONG*                      pInsNumber
+            );
+
+    description:
+
+        This function is called to retrieve the entry specified by the index.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                ULONG                       nIndex,
+                The index of this entry;
+
+                ULONG*                      pInsNumber
+                The output instance number;
+
+    return:     The handle to identify the entry
+
+**********************************************************************/
+ANSC_HANDLE
+APMLD_GetEntry
+    (
+        ANSC_HANDLE                 hInsContext,
+        ULONG                       nIndex,
+        ULONG*                      pInsNumber
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: total number of apmlds:%d nIndex:%d\n",__func__, __LINE__, get_total_num_apmld_dml(), nIndex);
+    if ( nIndex >= 0 && nIndex <= (UINT)get_total_num_apmld_dml() )
+    {
+        *pInsNumber = nIndex + 1;
+    }
+
+    return (ANSC_HANDLE)(nIndex + 1);
+}
+
+BOOL
+APMLD_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      puLong
+    )
+{
+    if (AnscEqualString(ParamName, "AffiliatedAPNumberOfEntries", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STAMLDNumberOfEntries", TRUE))
+    {
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d STAMLDNumberOfEntries\n", __FUNCTION__,__LINE__);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+ULONG
+APMLD_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+
+    ULONG apmld_index = (ULONG)hInsContext - 1;
+
+    if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
+    {/*
+        char buff[24] = {0};
+        if (get_mld_addr_by_id(apmld_index, buff) == 0)
+        {
+            memcpy(pValue, buff, strlen(buff) + 1);
+
+            wifi_util_dbg_print(WIFI_DMCLI,"%s:%d MLDADDR: %s apmld_index %u\n", __FUNCTION__,__LINE__, pValue, apmld_index);
+            return 0;
+        }*/
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d MLDADDR: ERROR apmld_index %u\n", __FUNCTION__,__LINE__, apmld_index);
+        return -1;
+    }
+
+    return -1;
+}
+
+BOOL
+APMLD_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       uValue
+    )
+{
+    if (AnscEqualString(ParamName, "AffiliatedAPNumberOfEntries", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STAMLDNumberOfEntries", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+APMLD_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pString
+    )
+{
+    if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+APMLD_Validate
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       pReturnParamName,
+        ULONG*                      puLength
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+    UNREFERENCED_PARAMETER(pReturnParamName);
+    UNREFERENCED_PARAMETER(puLength);
+    return TRUE;
+}
+
+ULONG
+APMLD_Commit
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    return TRUE; 
+}
+
+ULONG
+APMLD_Rollback
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+    return ANSC_STATUS_SUCCESS;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.APMLD.{i}.APMLDConfig.
+
+    *  APMLDConfig_GetParamBoolValue
+    *  APMLDConfig_SetParamBoolValue
+
+***********************************************************************/
+
+BOOL
+APMLDConfig_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+    if (AnscEqualString(ParamName, "EMLMREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "EMLSREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "NSTREnabled", TRUE))
+    {
+	    return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+APMLDConfig_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    if (AnscEqualString(ParamName, "EMLMREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "EMLSREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "NSTREnabled", TRUE))
+    {
+	    return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.APMLD.{i}.AffiliatedAP.{i}.
+
+    *  AffiliatedAP_GetEntryCount
+    *  AffiliatedAP_GetEntry
+    *  AffiliatedAP_GetParamUlongValue
+    *  AffiliatedAP_GetParamStringValue
+    *  AffiliatedAP_SetParamUlongValue
+    *  AffiliatedAP_SetParamStringValue
+
+***********************************************************************/
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ULONG
+        APMLD_GetEntryCount
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to retrieve the count of the table.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The count of the table
+
+**********************************************************************/
+ULONG
+AffiliatedAP_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);    
+
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: get_total_num_affiliated_ap_dml():::%d\n",__func__, __LINE__, get_total_num_affiliated_ap_dml());    
+
+    return get_total_num_affiliated_ap_dml();
+}
+
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ANSC_HANDLE
+        APMLD_GetEntry
+            (
+                ANSC_HANDLE                 hInsContext,
+                ULONG                       nIndex,
+                ULONG*                      pInsNumber
+            );
+
+    description:
+
+        This function is called to retrieve the entry specified by the index.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                ULONG                       nIndex,
+                The index of this entry;
+
+                ULONG*                      pInsNumber
+                The output instance number;
+
+    return:     The handle to identify the entry
+
+**********************************************************************/
+static int get_vap_in_mld(unsigned int mld_id, unsigned int vap_id)
+{
+    switch (vap_id)
+    {
+        case 1:
+        case 2:
+            return mld_id * 2 + vap_id - 1;
+        case 3:
+            return mld_id + 16;
+        default:
+            return -1;
+    }
+
+    return -1;
+}
+
+ANSC_HANDLE
+AffiliatedAP_GetEntry
+    (
+        ANSC_HANDLE                 hInsContext,
+        ULONG                       nIndex,
+        ULONG*                      pInsNumber
+    )
+{
+    ULONG apmld_index = (ULONG)hInsContext - 1;
+    ULONG vap_index = get_vap_in_mld(apmld_index, nIndex + 1);
+
+    if ( nIndex >= 0 && nIndex <= (UINT)get_total_num_affiliated_ap_dml() )
+    {
+        *pInsNumber = nIndex + 1;
+    }
+
+    return (ANSC_HANDLE)(vap_index + 1);
+}
+
+BOOL
+AffiliatedAP_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      puLong
+    )
+{
+    ULONG vap_index = (ULONG)hInsContext - 1;
+
+    wifi_vap_info_t *vap = (wifi_vap_info_t *)get_dml_vap_parameters(vap_index);
+
+    if (vap == NULL) {
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: vap is NULL\n", __func__, __LINE__);
+        return FALSE;
+    }
+
+    if (AnscEqualString(ParamName, "LinkID", TRUE))
+    {
+        if (isVapSTAMesh(vap_index))
+        {
+            *puLong = vap->u.sta_info.mld_info.common_info.mld_link_id;
+            return TRUE;
+        }
+
+        *puLong = vap->u.bss_info.mld_info.common_info.mld_link_id;
+
+        return TRUE;
+    }
+
+    if (AnscEqualString(ParamName, "DisabledSubChannels", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+ULONG
+AffiliatedAP_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    ULONG vap_index = (ULONG)hInsContext - 1;
+
+    wifi_vap_info_t *vap = (wifi_vap_info_t *)get_dml_vap_parameters(vap_index);
+
+    if (vap == NULL) {
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: vap is NULL\n", __func__, __LINE__);
+        return FALSE;
+    }
+
+    if (AnscEqualString(ParamName, "BSSID", TRUE))
+    {
+        char buff[24] = {0};
+
+        if (isVapSTAMesh(vap->vap_index)) {
+            _ansc_sprintf
+            (
+                buff,
+                "%02X:%02X:%02X:%02X:%02X:%02X",
+                vap->u.sta_info.bssid[0],
+                vap->u.sta_info.bssid[1],
+                vap->u.sta_info.bssid[2],
+                vap->u.sta_info.bssid[3],
+                vap->u.sta_info.bssid[4],
+                vap->u.sta_info.bssid[5]
+            );
+        } 
+        else 
+        {
+            _ansc_sprintf
+            (
+                buff,
+                "%02X:%02X:%02X:%02X:%02X:%02X",
+                vap->u.bss_info.bssid[0],
+                vap->u.bss_info.bssid[1],
+                vap->u.bss_info.bssid[2],
+                vap->u.bss_info.bssid[3],
+                vap->u.bss_info.bssid[4],
+                vap->u.bss_info.bssid[5]
+            );
+        }
+
+        memcpy(pValue, buff, strlen(buff) + 1);
+
+        return 0;
+    }
+
+    return -1;
+}
+
+BOOL
+AffiliatedAP_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       uValue
+    )
+{
+    if (AnscEqualString(ParamName, "LinkID", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "DisabledSubChannels", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+AffiliatedAP_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pString
+    )
+{
+    if (AnscEqualString(ParamName, "BSSID", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.APMLD.{i}.STAMLD.{i}.
+
+    *  STAMLD_GetEntryCount
+    *  STAMLD_GetEntry
+    *  STAMLD_GetParamStringValue
+    *  STAMLD_SetParamStringValue
+
+***********************************************************************/
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ULONG
+        STAMLD_GetEntryCount
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to retrieve the count of the table.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The count of the table
+
+**********************************************************************/
+ULONG
+STAMLD_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);    
+
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: total number of apmld:%d get_total_num_apmld_dml():::%d\n",__func__, __LINE__, get_num_radio_dml() * MAX_NUM_VAP_PER_RADIO, get_total_num_vap_dml());
+    return 3;
+}
+
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ANSC_HANDLE
+        STAMLD_GetEntry
+            (
+                ANSC_HANDLE                 hInsContext,
+                ULONG                       nIndex,
+                ULONG*                      pInsNumber
+            );
+
+    description:
+
+        This function is called to retrieve the entry specified by the index.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                ULONG                       nIndex,
+                The index of this entry;
+
+                ULONG*                      pInsNumber
+                The output instance number;
+
+    return:     The handle to identify the entry
+
+**********************************************************************/
+ANSC_HANDLE
+STAMLD_GetEntry
+    (
+        ANSC_HANDLE                 hInsContext,
+        ULONG                       nIndex,
+        ULONG*                      pInsNumber
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+
+    if ( nIndex >= 0 && nIndex <= 3 )
+    {
+        *pInsNumber = nIndex + 1;
+    }
+
+    return (ANSC_HANDLE)(nIndex + 1); /* return the handle */
+}
+
+ULONG
+STAMLD_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+STAMLD_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pString
+    )
+{
+    if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.bSTAMLD.
+
+    *  bSTAMLD_GetParamStringValue
+    *  bSTAMLD_SetParamStringValue
+
+***********************************************************************/
+
+ULONG
+bSTAMLD_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "BSSID", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "AffiliatedbSTAList", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+bSTAMLD_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pString
+    )
+{
+    if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "BSSID", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "AffiliatedbSTAList", TRUE))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.bSTAMLD.bSTAMLDConfig.
+
+    *  bSTAMLDConfig_GetParamBoolValue
+    *  bSTAMLDConfig_SetParamBoolValue
+
+***********************************************************************/
+
+BOOL
+bSTAMLDConfig_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+    if (AnscEqualString(ParamName, "EMLMREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "EMLSREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "NSTREnabled", TRUE))
+    {
+	    return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL
+bSTAMLDConfig_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    if (AnscEqualString(ParamName, "EMLMREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "EMLSREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "STREnabled", TRUE))
+    {
+        return TRUE;
+    }
+    if (AnscEqualString(ParamName, "NSTREnabled", TRUE))
+    {
+	    return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
     WiFi.
 
     *  WiFi_GetParamBoolValue
