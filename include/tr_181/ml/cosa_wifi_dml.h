@@ -2040,6 +2040,24 @@ AssociatedDevice1_IsUpdated
         ANSC_HANDLE                 hInsContext
     );
 
+BOOL
+APMLD_IsUpdated
+    (
+        ANSC_HANDLE                 hInsContext
+    );
+
+BOOL
+STAMLD_IsUpdated
+    (
+        ANSC_HANDLE                 hInsContext
+    );
+
+ULONG
+STAMLD_Synchronize
+    (
+        ANSC_HANDLE                 hInsContext
+    );
+
 ULONG
 AssociatedDevice1_Synchronize
     (

@@ -489,15 +489,6 @@ APMLD_GetParamUlongValue
         ULONG*                      puLong
     )
 {
-    if (AnscEqualString(ParamName, "AffiliatedAPNumberOfEntries", TRUE))
-    {
-        return TRUE;
-    }
-    if (AnscEqualString(ParamName, "STAMLDNumberOfEntries", TRUE))
-    {
-        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d STAMLDNumberOfEntries\n", __FUNCTION__,__LINE__);
-        return TRUE;
-    }
 
     return FALSE;
 }
@@ -953,10 +944,12 @@ STAMLD_GetEntryCount
         ANSC_HANDLE                 hInsContext
     )
 {
-    UNREFERENCED_PARAMETER(hInsContext);    
+    UNREFERENCED_PARAMETER(hInsContext); //Todo: Stano: hInsContext should be array of vaps in mld unit - Oleh: in progress
 
-    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: total number of apmld:%d get_total_num_apmld_dml():::%d\n",__func__, __LINE__, get_num_radio_dml() * MAX_NUM_VAP_PER_RADIO, get_total_num_vap_dml());
-    return 3;
+    UINT mld_id = 0;
+    unsigned long count = 0;
+    count  = get_mld_associated_devices_count(mld_id);
+    return count;
 }
 
 /**********************************************************************  
@@ -998,7 +991,7 @@ STAMLD_GetEntry
     )
 {
     UNREFERENCED_PARAMETER(hInsContext);
-
+    //Todo: Stano: do it similary as AssociatedDevice1_GetEntry?
     if ( nIndex >= 0 && nIndex <= 3 )
     {
         *pInsNumber = nIndex + 1;
@@ -1018,6 +1011,7 @@ STAMLD_GetParamStringValue
 {
     if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
     {
+        //todo: Stano
         return TRUE;
     }
 
@@ -17196,6 +17190,39 @@ AssociatedDevice1_IsUpdated
     return TRUE;
 }
 
+BOOL
+APMLD_IsUpdated
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    return TRUE;
+}
+
+BOOL
+STAMLD_IsUpdated
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    return TRUE;
+}
+
+
+
+
+ULONG
+STAMLD_Synchronize
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    //here will be array of vap_info pointers which are part of MLO
+    {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "XX sync\n"); fflush(out);fclose(out);}
+    get_associated_devices_data(0);
+    return ANSC_STATUS_SUCCESS;
+}
+
 /**********************************************************************  
 
     caller:     owner of this object 
@@ -17670,7 +17697,7 @@ AssociatedDevice1_GetParamStringValue
         char*                       pValue,
         ULONG*                      pUlSize
     )
-{
+{//why this code is not part of get entry, it is the same in all functions
     errno_t                         rc           = -1;
     assoc_dev_data_t *assoc_dev_data_temp = NULL, *assoc_dev_data = NULL;
     unsigned long vap_index_mask = (unsigned long) hInsContext;
@@ -17708,10 +17735,20 @@ AssociatedDevice1_GetParamStringValue
     
     memcpy(assoc_dev_data, assoc_dev_data_temp, sizeof(assoc_dev_data_t));
     pthread_mutex_unlock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
-    
+    //Todo: check for inspiration
     if( AnscEqualString(ParamName, "MACAddress", TRUE))
     {
         char p_mac[18];
+        mac_addr_str_t mac_str = {0};
+        mac_addr_str_t mlo_mac_str = {0};
+
+        to_mac_str(assoc_dev_data->dev_stats.cli_MACAddress, mac_str);
+        to_mac_str(assoc_dev_data->dev_stats.cli_MLDAddr, mlo_mac_str);
+
+        {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "assoc dev: mac: %s mlo_mac:%s MLDEnable %d \n",
+            mac_str, mlo_mac_str,assoc_dev_data->dev_stats.cli_MLDEnable); fflush(out);fclose(out);}
+
+
         snprintf(p_mac, 18, "%02x:%02x:%02x:%02x:%02x:%02x", assoc_dev_data->dev_stats.cli_MACAddress[0], assoc_dev_data->dev_stats.cli_MACAddress[1], assoc_dev_data->dev_stats.cli_MACAddress[2],
                    assoc_dev_data->dev_stats.cli_MACAddress[3], assoc_dev_data->dev_stats.cli_MACAddress[4], assoc_dev_data->dev_stats.cli_MACAddress[5]);
         if ( AnscSizeOfString(p_mac) < *pUlSize)

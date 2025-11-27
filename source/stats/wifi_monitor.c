@@ -1031,9 +1031,14 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
         pthread_mutex_unlock(&g_monitor_module.data_lock);
         return -1;
     }
+    mac_addr_str_t mld_mac_str = { 0 };
+
+    to_mac_str(sta_data->dev_stats.cli_MLDAddr, mld_mac_str);
 
     assoc_dev_data->dev_stats.cli_AuthenticationState = sta_data->dev_stats.cli_AuthenticationState;
     assoc_dev_data->dev_stats.cli_LastDataDownlinkRate = sta_data->dev_stats.cli_LastDataDownlinkRate;
+    {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "2x cli_LastDataDownlinkRate %u mld_mac %s\n",
+        assoc_dev_data->dev_stats.cli_LastDataDownlinkRate, mld_mac_str); fflush(out);fclose(out);}
     assoc_dev_data->dev_stats.cli_LastDataUplinkRate = sta_data->dev_stats.cli_LastDataUplinkRate;
     assoc_dev_data->dev_stats.cli_SignalStrength = sta_data->dev_stats.cli_SignalStrength;
     assoc_dev_data->dev_stats.cli_Retransmissions = sta_data->dev_stats.cli_Retransmissions;
@@ -3275,7 +3280,7 @@ int device_associated(int ap_index, wifi_associated_dev_t *associated_dev)
     assoc_data.dev_stats.cli_RSSI = associated_dev->cli_RSSI;
     assoc_data.dev_stats.cli_AuthenticationState = associated_dev->cli_AuthenticationState;
     assoc_data.dev_stats.cli_LastDataDownlinkRate = associated_dev->cli_LastDataDownlinkRate;
-
+    {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "1x cli_LastDataDownlinkRate %u \n", assoc_data.dev_stats.cli_LastDataDownlinkRate); fflush(out);fclose(out);}
     assoc_data.dev_stats.cli_LastDataUplinkRate = associated_dev->cli_LastDataUplinkRate;
     assoc_data.dev_stats.cli_SignalStrength = associated_dev->cli_SignalStrength;
     assoc_data.dev_stats.cli_Retransmissions = associated_dev->cli_Retransmissions;
@@ -3295,6 +3300,8 @@ int device_associated(int ap_index, wifi_associated_dev_t *associated_dev)
     assoc_data.dev_stats.cli_MaxRSSI = associated_dev->cli_MaxRSSI;
     assoc_data.dev_stats.cli_Disassociations = associated_dev->cli_Disassociations;
     assoc_data.dev_stats.cli_AuthenticationFailures = associated_dev->cli_AuthenticationFailures;
+    assoc_data.dev_stats.cli_MLDAddr[1]=0x55;
+    assoc_data.dev_stats.cli_MLDEnable = 1;
     snprintf(assoc_data.dev_stats.cli_OperatingStandard, sizeof(assoc_data.dev_stats.cli_OperatingStandard),"%s", associated_dev->cli_OperatingStandard);
     snprintf(assoc_data.dev_stats.cli_OperatingChannelBandwidth, sizeof(assoc_data.dev_stats.cli_OperatingChannelBandwidth),"%s", associated_dev->cli_OperatingChannelBandwidth);
     snprintf(assoc_data.dev_stats.cli_InterferenceSources, sizeof(assoc_data.dev_stats.cli_InterferenceSources),"%s", associated_dev->cli_InterferenceSources);

@@ -561,7 +561,7 @@ webconfig_error_t webconfig_dml_apply(webconfig_dml_t *consumer, webconfig_subdo
     return webconfig_error_none;
 }
 
-void get_associated_devices_data(unsigned int radio_index)
+void get_associated_devices_data(unsigned int radio_index) //Stano why we have here radio index which is not used???
 {
     int itr=0, itrj=0;
     webconfig_subdoc_data_t data;
@@ -610,6 +610,75 @@ void get_associated_devices_data(unsigned int radio_index)
 
     free(str);
     webconfig_data_free(&data);
+}
+
+//Stano: Todo: we will not need this function - will arrive from APMLD via get entry
+void create_mld_map_for_mld_unit(wifi_vap_info_t *mlo_vaps[4], UINT mld_id)
+{
+    wifi_vap_info_map_t *mgr_vap_info_map = NULL;
+    unsigned int idx = 0;
+
+    for (unsigned int r_idx = 0; r_idx < getNumberRadios(); r_idx++) {
+
+        mgr_vap_info_map = get_wifidb_vap_map(r_idx);
+        if (mgr_vap_info_map == NULL) {
+            wifi_util_error_print(WIFI_DMCLI, "%s:%d get_wifidb_vap_map failed for radio: %d\n", __FUNCTION__, __LINE__, r_idx);
+            return;
+        }
+
+        for (unsigned int k = 0; k < mgr_vap_info_map->num_vaps; k++) {
+            wifi_vap_info_t *vap_config = &mgr_vap_info_map->vap_array[k];
+            wifi_mld_common_info_t *mld_info = &vap_config->u.bss_info.mld_info.common_info;
+            if (mld_info->mld_enable && mld_info->mld_id == mld_id) {
+                if (idx < 4)
+                    mlo_vaps[idx++] = vap_config;
+            }
+        }
+    }
+}
+
+int get_mld_associated_devices_count_vap(wifi_vap_info_t *vap_info)
+{
+    int count = 0;
+    assoc_dev_data_t *assoc_dev_data_temp = NULL;
+
+    pthread_mutex_lock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
+
+    hash_map_t *assoc_vap_info_map = (hash_map_t *)get_associated_devices_hash_map(vap_info->vap_index);
+    if (assoc_vap_info_map == NULL) {
+        wifi_util_error_print(WIFI_DMCLI,"%s:%d NULL pointer\n", __func__, __LINE__);
+        pthread_mutex_unlock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
+        return -1;
+    }
+
+    assoc_dev_data_temp = hash_map_get_first(assoc_vap_info_map);
+    while (assoc_dev_data_temp != NULL) {
+        if (assoc_dev_data_temp->dev_stats.cli_MLDEnable)
+            count++;
+        assoc_dev_data_temp = hash_map_get_next(assoc_vap_info_map, assoc_dev_data_temp);
+    }
+    pthread_mutex_unlock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
+    wifi_util_dbg_print(WIFI_DMCLI,"%s %d vap_index %d mlo associated devices count %d\n",
+        __func__, __LINE__, vap_info->vap_index, count);
+    return count;
+}
+
+unsigned long get_mld_associated_devices_count(UINT mlo_id)
+{
+    int i, tmp_count;
+    unsigned long count = 0;
+    wifi_vap_info_t *mlo_vaps[4] = {0};
+    create_mld_map_for_mld_unit(mlo_vaps, mlo_id); //Stano: Todo: this will be input parameter of the func
+
+    for (i = 0; i < MAX_NUM_RADIOS; i++) {
+        wifi_vap_info_t *vap = mlo_vaps[i];
+        if (vap == NULL)
+            continue;;
+        tmp_count = get_mld_associated_devices_count_vap(vap);
+        if (tmp_count > 0)
+            count += tmp_count;
+    }
+    return count;
 }
 
 unsigned long get_associated_devices_count(wifi_vap_info_t *vap_info)
