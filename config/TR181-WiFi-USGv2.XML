@@ -371,8 +371,12 @@
                     <objects>
                         <object>
                             <name>Device</name>
-                            <objectType>object</objectType>
-                            <functions></functions>
+                                    <objectType>dynamicTable</objectType>
+                                    <maxInstance>128</maxInstance>
+                            <functions>
+                                <func_GetEntryCount>Device_GetEntryCount</func_GetEntryCount>
+                                <func_GetEntry>Device_GetEntry</func_GetEntry>
+                            </functions>
                             <parameters></parameters>
                             <!-- <objectType>staticTable</objectType>
                             <maxInstance>128</maxInstance> -->

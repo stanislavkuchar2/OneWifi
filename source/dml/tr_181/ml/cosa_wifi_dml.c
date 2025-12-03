@@ -707,36 +707,6 @@ AffiliatedAP_GetEntryCount
     return get_total_num_affiliated_ap_dml();
 }
 
-/**********************************************************************  
-
-    caller:     owner of this object 
-
-    prototype: 
-
-        ANSC_HANDLE
-        APMLD_GetEntry
-            (
-                ANSC_HANDLE                 hInsContext,
-                ULONG                       nIndex,
-                ULONG*                      pInsNumber
-            );
-
-    description:
-
-        This function is called to retrieve the entry specified by the index.
-
-    argument:   ANSC_HANDLE                 hInsContext,
-                The instance handle;
-
-                ULONG                       nIndex,
-                The index of this entry;
-
-                ULONG*                      pInsNumber
-                The output instance number;
-
-    return:     The handle to identify the entry
-
-**********************************************************************/
 static int get_vap_in_mld(unsigned int mld_id, unsigned int vap_id)
 {
     switch (vap_id)
@@ -913,7 +883,6 @@ AffiliatedAP_SetParamStringValue
     *  STAMLD_GetEntryCount
     *  STAMLD_GetEntry
     *  STAMLD_GetParamStringValue
-    *  STAMLD_SetParamStringValue
 
 ***********************************************************************/
 /**********************************************************************  
@@ -952,6 +921,26 @@ STAMLD_GetEntryCount
     return count;
 }
 
+ULONG
+Device_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext); //Todo: Stano: hInsContext should be array of vaps in mld unit - Oleh: in progress
+
+    return 1;
+}
+
+ANSC_HANDLE
+Device_GetEntry(ANSC_HANDLE hInsContext, ULONG nIndex, ULONG *pInsNumber)
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+    wifi_util_dbg_print(WIFI_DMCLI, "%s:%d: nIndex:%ld\n", __func__, __LINE__, nIndex);
+
+    *pInsNumber = nIndex + 1;
+    return (ANSC_HANDLE) (*pInsNumber);
+}
 /**********************************************************************  
 
     caller:     owner of this object 
@@ -991,15 +980,71 @@ STAMLD_GetEntry
     )
 {
     UNREFERENCED_PARAMETER(hInsContext);
-    //Todo: Stano: do it similary as AssociatedDevice1_GetEntry?
-    if ( nIndex >= 0 && nIndex <= 3 )
-    {
-        *pInsNumber = nIndex + 1;
-    }
+    //Todo: Stano: implement hInsContext properly after finalizing previous things STAMLD
+    UINT mld_id = 0;
+    unsigned long count = 0;
+    unsigned long dev_index_mask = 0;
 
-    return (ANSC_HANDLE)(nIndex + 1); /* return the handle */
+    count  = get_mld_associated_devices_count(mld_id);
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: total number of STAMLD:%d nIndex:%d\n",__func__, __LINE__, count, nIndex);
+    if ( nIndex >= count )
+    {
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d Index out of range\n", __func__, __LINE__);
+        return (ANSC_HANDLE) NULL;
+    }
+    *pInsNumber = nIndex + 1;
+    dev_index_mask = (*pInsNumber << 8) + mld_id;
+    return (ANSC_HANDLE) dev_index_mask; /* return the handle */
+    /*
+    assoc_dev_data_t *assoc_dev_data_temp = NULL, *assoc_dev_data = NULL;
+    unsigned long vap_index_mask = (unsigned long) hInsContext;
+    unsigned int dev_index = (vap_index_mask >> 8);
+    unsigned int vap_index = (0xff & vap_index_mask);
+    */
+
+    //return (ANSC_HANDLE)(nIndex + 1); /* return the handle */
+
 }
 
+
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ULONG
+        STAMLD_GetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pValue,
+                ULONG*                      pUlSize
+            );
+
+    description:
+
+        This function is called to retrieve string parameter value; 
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       pValue,
+                The string value buffer;
+
+                ULONG*                      pUlSize
+                The buffer of length of string value;
+                Usually size of 1023 will be used.
+                If it's not big enough, put required size here and return 1;
+
+    return:     0 if succeeded;
+                1 if short of buffer size; (*pUlSize = required size)
+                -1 if not supported.
+
+**********************************************************************/
 ULONG
 STAMLD_GetParamStringValue
     (
@@ -1009,29 +1054,28 @@ STAMLD_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
+    unsigned long dev_index_mask = (unsigned long) hInsContext;
+    unsigned int dev_index = (dev_index_mask >> 8);
+    unsigned int mld_unit = (0xff & dev_index_mask);
+    assoc_dev_data_t *assoc_dev_data = NULL;
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: hInsContext:%d dev_index:%d\n",__func__, __LINE__, hInsContext, dev_index);
+    assoc_dev_data = get_mld_associated_device(mld_unit, dev_index);
     if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
     {
-        //todo: Stano
-        return TRUE;
+        mac_addr_str_t mac_str = {0};
+        to_mac_str(assoc_dev_data->dev_stats.cli_MLDAddr, mac_str);
+        if ( AnscSizeOfString(mac_str) < *pUlSize)
+        {
+            AnscCopyString(pValue, mac_str);
+            free(assoc_dev_data);
+            return 0;
+        }
+        *pUlSize = AnscSizeOfString(mac_str)+1;
+        free(assoc_dev_data);
+        return 1;
     }
-
-    return FALSE;
-}
-
-BOOL
-STAMLD_SetParamStringValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        char*                       pString
-    )
-{
-    if (AnscEqualString(ParamName, "MLDMACAddress", TRUE))
-    {
-        return TRUE;
-    }
-
-    return FALSE;
+    free(assoc_dev_data);
+    return -1;
 }
 
 /***********************************************************************

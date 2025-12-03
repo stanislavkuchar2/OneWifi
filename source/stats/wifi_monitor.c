@@ -1014,6 +1014,7 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
     }
 
     hash_map_t *sta_map = NULL;
+    hash_map_t *sta_map1 = NULL;
     sta_data_t *sta_data = NULL;
     sta_key_t sta_key;
 
@@ -1024,6 +1025,13 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
     to_sta_key(assoc_dev_data->dev_stats.cli_MACAddress, sta_key);
 
     str_tolower(sta_key);
+
+    for (int i = 0; i< 22; i++){
+        sta_map1 = g_monitor_module.bssid_data[i].sta_map;
+        int c = hash_map_count(sta_map1);
+        sta_data = (sta_data_t *)hash_map_get(sta_map1, sta_key);
+        {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "%d sta map count %d found %p\n", i,c, sta_data); fflush(out);fclose(out);}
+    }
 
     sta_data = (sta_data_t *)hash_map_get(sta_map, sta_key);
     if (sta_data == NULL) {

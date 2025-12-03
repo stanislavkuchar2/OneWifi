@@ -421,7 +421,6 @@ AffiliatedAP_SetParamStringValue
     Device.WiFi.DataElements.Network.Device.{i}.APMLD.{i}.STAMLD.{i}.
 
     *  STAMLD_GetParamStringValue
-    *  STAMLD_SetParamStringValue
 
 ***********************************************************************/
 ULONG
@@ -445,14 +444,6 @@ STAMLD_GetParamStringValue
         char*                       ParamName,
         char*                       pValue,
         ULONG*                      pUlSize
-    );
-
-BOOL
-STAMLD_SetParamStringValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        char*                       pString
     );
 
 /***********************************************************************

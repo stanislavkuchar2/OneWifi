@@ -585,6 +585,7 @@ void get_associated_devices_data(unsigned int radio_index) //Stano why we have h
         free(str);
         return;
     }
+    //{FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "assoc data **** %s\n", str); fflush(out);fclose(out);}
     pthread_mutex_lock(&webconfig_dml.assoc_dev_lock);
     for (itr=0; itr < (int)get_num_radio_dml(); itr++) {
         for (itrj=0; itrj<MAX_NUM_VAP_PER_RADIO; itrj++) {
@@ -637,7 +638,7 @@ void create_mld_map_for_mld_unit(wifi_vap_info_t *mlo_vaps[4], UINT mld_id)
     }
 }
 
-int get_mld_associated_devices_count_vap(wifi_vap_info_t *vap_info)
+/*int get_mld_associated_devices_count_vap(wifi_vap_info_t *vap_info)
 {
     int count = 0;
     assoc_dev_data_t *assoc_dev_data_temp = NULL;
@@ -661,25 +662,79 @@ int get_mld_associated_devices_count_vap(wifi_vap_info_t *vap_info)
     wifi_util_dbg_print(WIFI_DMCLI,"%s %d vap_index %d mlo associated devices count %d\n",
         __func__, __LINE__, vap_info->vap_index, count);
     return count;
-}
+}*/
 
 unsigned long get_mld_associated_devices_count(UINT mlo_id)
 {
-    int i, tmp_count;
+    int i;
     unsigned long count = 0;
     wifi_vap_info_t *mlo_vaps[4] = {0};
+    assoc_dev_data_t *assoc_dev_data_temp = NULL;
     create_mld_map_for_mld_unit(mlo_vaps, mlo_id); //Stano: Todo: this will be input parameter of the func
 
+    pthread_mutex_lock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
     for (i = 0; i < MAX_NUM_RADIOS; i++) {
-        wifi_vap_info_t *vap = mlo_vaps[i];
-        if (vap == NULL)
+        wifi_vap_info_t *vap_info = mlo_vaps[i];
+        if (vap_info == NULL)
             continue;;
-        tmp_count = get_mld_associated_devices_count_vap(vap);
-        if (tmp_count > 0)
-            count += tmp_count;
+        hash_map_t *assoc_vap_info_map = (hash_map_t *)get_associated_devices_hash_map(vap_info->vap_index);
+        if (assoc_vap_info_map == NULL) {
+            wifi_util_error_print(WIFI_DMCLI,"%s:%d assoc_vap_info_map NULL pointer for vap_index %d\n",
+                __func__, __LINE__, vap_info->vap_index);
+            continue;
+        }
+
+        assoc_dev_data_temp = hash_map_get_first(assoc_vap_info_map);
+        while (assoc_dev_data_temp != NULL) {
+            if (assoc_dev_data_temp->dev_stats.cli_MLDEnable)
+                count++;
+            assoc_dev_data_temp = hash_map_get_next(assoc_vap_info_map, assoc_dev_data_temp);
+        }
     }
+    pthread_mutex_unlock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
     return count;
 }
+
+assoc_dev_data_t *get_mld_associated_device(UINT mlo_id, unsigned int dev_index)
+{
+    int i;
+    unsigned long idx = 0; /*indexed from value 1 - idx=0 is invalid value*/
+    wifi_vap_info_t *mlo_vaps[4] = {0};
+    assoc_dev_data_t *assoc_dev_data_temp = NULL, *assoc_dev_data = NULL;
+    create_mld_map_for_mld_unit(mlo_vaps, mlo_id); //Stano: Todo: this will be input parameter of the func
+
+    pthread_mutex_lock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
+    for (i = 0; i < MAX_NUM_RADIOS; i++) {
+        wifi_vap_info_t *vap_info = mlo_vaps[i];
+        if (vap_info == NULL)
+            continue;
+        hash_map_t *assoc_vap_info_map = (hash_map_t *)get_associated_devices_hash_map(vap_info->vap_index);
+        if (assoc_vap_info_map == NULL) {
+            wifi_util_error_print(WIFI_DMCLI,"%s:%d assoc_vap_info_map NULL pointer for vap_index %d\n",
+                __func__, __LINE__, vap_info->vap_index);
+            continue;
+        }
+
+        assoc_dev_data_temp = hash_map_get_first(assoc_vap_info_map);
+        while (assoc_dev_data_temp != NULL) {
+            if (assoc_dev_data_temp->dev_stats.cli_MLDEnable)
+                idx++;
+            if (idx == dev_index)
+                break;
+            assoc_dev_data_temp = hash_map_get_next(assoc_vap_info_map, assoc_dev_data_temp);
+        }
+        assoc_dev_data = (assoc_dev_data_t*) malloc(sizeof(assoc_dev_data_t));
+        if (NULL == assoc_dev_data) {
+            wifi_util_error_print(WIFI_DMCLI,"%s:%d assoc_dev_data - allocation failed!\n", __func__, __LINE__);
+            pthread_mutex_unlock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
+            return NULL;
+        }
+        memcpy(assoc_dev_data, assoc_dev_data_temp, sizeof(assoc_dev_data_t));
+    }
+    pthread_mutex_unlock(&((webconfig_dml_t*) get_webconfig_dml())->assoc_dev_lock);
+    return assoc_dev_data;
+}
+
 
 unsigned long get_associated_devices_count(wifi_vap_info_t *vap_info)
 {
