@@ -121,6 +121,10 @@ hash_map_t** get_dml_acl_hash_map(unsigned int radio_index, unsigned int vap_ind
 queue_t** get_dml_acl_new_entry_queue(unsigned int radio_index, unsigned int vap_index);
 void** get_acl_vap_context();
 UINT get_num_radio_dml();
+UINT get_total_num_affiliated_ap_dml();
+UINT get_total_num_apmld_dml();
+unsigned long get_mld_associated_devices_count(UINT mlo_id);
+assoc_dev_data_t *get_mld_associated_device(UINT mlo_id, unsigned int dev_index);
 UINT get_total_num_vap_dml();
 void get_associated_devices_data(unsigned int radio_index);
 unsigned long get_associated_devices_count(wifi_vap_info_t *vap_info);
@@ -153,6 +157,7 @@ int push_wps_pin_dml_to_ctrl_queue(unsigned int vap_index, char *wps_pin);
 int push_vap_dml_cache_to_one_wifidb();
 int push_blaster_config_dml_to_ctrl_queue();
 int process_neighbor_scan_dml();
+int get_mld_addr_by_id(unsigned int mld_id, mac_address_t *mac);
 instant_measurement_config_t *get_dml_cache_harvester();
 instant_measurement_config_t* get_dml_harvester(void);
 int push_harvester_dml_cache_to_one_wifidb();
