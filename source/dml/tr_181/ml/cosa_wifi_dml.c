@@ -457,15 +457,26 @@ APMLD_GetEntry
         ULONG*                      pInsNumber
     )
 {
+    wifi_util_info_print(WIFI_DMCLI, "%s:%d APMLD_GetEntry called\n", __func__, __LINE__);
+
     UNREFERENCED_PARAMETER(hInsContext);
 
-    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: total number of apmlds:%d nIndex:%d\n",__func__, __LINE__, get_total_num_apmld_dml(), nIndex);
-    if ( nIndex >= 0 && nIndex <= (UINT)get_total_num_apmld_dml() )
-    {
+    char mld_id_map[MLD_UNIT_COUNT] = {0};
+
+    int count;
+    create_mld_map(mld_id_map, &count);
+
+    if (nIndex >= 0 && nIndex <= (UINT)get_total_num_apmld_dml()) {
         *pInsNumber = nIndex + 1;
+
+        wifi_util_info_print(WIFI_DMCLI, "%s:%d APMLD_GetEntry ended good\n", __func__, __LINE__);
+
+        return (ANSC_HANDLE)(ULONG)(mld_id_map[nIndex]+1);
     }
 
-    return (ANSC_HANDLE)(nIndex + 1);
+    wifi_util_info_print(WIFI_DMCLI, "%s:%d APMLD_GetEntry ended with error\n", __func__, __LINE__);
+
+    return NULL;
 }
 
 BOOL
@@ -866,11 +877,11 @@ AffiliatedAP_GetEntryCount
         ANSC_HANDLE                 hInsContext
     )
 {
-    UNREFERENCED_PARAMETER(hInsContext);    
+    wifi_util_info_print(WIFI_DMCLI, "%s:%d AffiliatedAP_GetEntryCount called\n", __func__, __LINE__);
+    UNREFERENCED_PARAMETER(hInsContext);
+    //ULONG mld_id = (ULONG)hInsContext;
 
-    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: get_total_num_affiliated_ap_dml():::%d\n",__func__, __LINE__, get_total_num_affiliated_ap_dml());    
-
-    return get_total_num_affiliated_ap_dml();
+    return get_total_num_affiliated_ap_dml(0);//TODO: here shuld be passed vap_info ptr
 }
 
 static int get_vap_in_mld(unsigned int mld_id, unsigned int vap_id)
@@ -930,7 +941,7 @@ AffiliatedAP_GetEntry
     ULONG apmld_index = (ULONG)hInsContext - 1;
     ULONG vap_index = get_vap_in_mld(apmld_index, nIndex + 1);
 
-    if ( nIndex >= 0 && nIndex <= (UINT)get_total_num_affiliated_ap_dml() )
+    if ( nIndex >= 0 && nIndex <= (UINT)get_total_num_affiliated_ap_dml(0) )
     {
         *pInsNumber = nIndex + 1;
     }
@@ -1054,7 +1065,7 @@ AffiliatedAP_GetParamStringValue
     )
 {
     ULONG vap_index = (ULONG)hInsContext - 1;
-
+    //Stano:todo use to_mac_str(assoc_dev_data->dev_stats.cli_MLDAddr, mld_mac_str);
     wifi_vap_info_t *vap = (wifi_vap_info_t *)get_dml_vap_parameters(vap_index);
 
     if (vap == NULL) {
@@ -1240,7 +1251,7 @@ STAMLD_GetEntryCount
     )
 {
     UNREFERENCED_PARAMETER(hInsContext); //Todo: Stano: hInsContext should be array of vaps in mld unit - Oleh: in progress
-
+wifi_util_info_print(WIFI_DMCLI, "%s:%d STAMLD_GetEntryCount called\n", __func__, __LINE__);
     UINT mld_id = 0;
     unsigned long count = 0;
     count  = get_mld_associated_devices_count(mld_id);

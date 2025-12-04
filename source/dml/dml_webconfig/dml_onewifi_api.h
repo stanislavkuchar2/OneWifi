@@ -35,6 +35,12 @@ typedef struct {
 } acl_data_t;
 
 typedef struct {
+    wifi_vap_info_t *mlo_vaps[MLD_UNIT_COUNT][MAX_NUM_RADIOS];
+    ULONG mld_count;
+} mld_vap_map_t;
+
+
+typedef struct {
     webconfig_t		webconfig;
     wifi_global_config_t    config;
     wifi_hal_capability_t   hal_cap;
@@ -46,6 +52,7 @@ typedef struct {
     bus_handle_t         handle;
     instant_measurement_config_t harvester;
     queue_t    *csi_data_queue;
+    mld_vap_map_t mld_vap_map;
 } webconfig_dml_t;
 
 typedef struct {
@@ -168,6 +175,7 @@ dml_stats_default *get_stats_default_obj(int r_index);
 wifi_channelBandwidth_t sync_bandwidth_and_hw_variant(uint32_t variant, wifi_channelBandwidth_t current_bw);
 UINT get_max_num_vaps_per_radio_dml(uint32_t radio_index);
 rdk_wifi_radio_t* get_dml_cache_radio_map_param(uint8_t radio_index);
+void create_mld_map(char* mld_map, int *mld_count);
 
 #ifdef __cplusplus
 }
