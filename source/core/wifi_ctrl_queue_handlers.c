@@ -1783,7 +1783,7 @@ void process_disassoc_device_event(void *data)
     if (rdk_vap_info == NULL) {
         return;
     }
-
+    {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "process_disassoc_device_event \n"); fflush(out);fclose(out);}
     memset(mac_str, 0, sizeof(mac_str));
     to_mac_str(assoc_data->dev_stats.cli_MACAddress, mac_str);
 
@@ -1884,7 +1884,7 @@ void process_assoc_device_event(void *data)
         wifi_util_error_print(WIFI_CTRL,"%s:%d NULL rdk_vap_info pointer\n", __func__, __LINE__);
         return;
     }
-
+    {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "process_assoc_device_event \n"); fflush(out);fclose(out);}
     pthread_mutex_lock(rdk_vap_info->associated_devices_lock);
     if (rdk_vap_info->associated_devices_map == NULL) {
         pthread_mutex_unlock(rdk_vap_info->associated_devices_lock);

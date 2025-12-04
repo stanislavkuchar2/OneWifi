@@ -358,6 +358,363 @@
 	</parameters>
 	<objects>
         <object>
+            <name>DataElements</name>
+            <objectType>object</objectType>
+            <functions></functions>
+            <parameters></parameters>
+            <objects>
+                <object>
+                    <name>Network</name>
+                    <objectType>object</objectType>
+                    <functions></functions>
+                    <parameters></parameters>
+                    <objects>
+                        <object>
+                            <name>Device</name>
+                                    <objectType>dynamicTable</objectType>
+                                    <maxInstance>128</maxInstance>
+                            <functions>
+                                <func_GetEntryCount>Device_GetEntryCount</func_GetEntryCount>
+                                <func_GetEntry>Device_GetEntry</func_GetEntry>
+                            </functions>
+                            <parameters></parameters>
+                            <!-- <objectType>staticTable</objectType>
+                            <maxInstance>128</maxInstance> -->
+                            <!-- <functions>
+                                <func_GetEntryCount>Device_GetEntryCount</func_GetEntryCount>
+                                <func_GetEntry>Device_GetEntry</func_GetEntry>
+                                <func_GetParamBoolValue>Device_GetParamBoolValue</func_GetParamBoolValue>
+                                <func_GetParamIntValue>Device_GetParamIntValue</func_GetParamIntValue>
+                                <func_GetParamUlongValue>Device_GetParamUlongValue</func_GetParamUlongValue>
+                                <func_GetParamStringValue>Device_GetParamStringValue</func_GetParamStringValue>
+                                <func_SetParamBoolValue>Device_SetParamBoolValue</func_SetParamBoolValue>
+                                <func_SetParamIntValue>Device_SetParamIntValue</func_SetParamIntValue>
+                                <func_SetParamUlongValue>Device_SetParamUlongValue</func_SetParamUlongValue>
+                                <func_SetParamStringValue>Device_SetParamStringValue</func_SetParamStringValue>
+                                <func_Validate>Device_Validate</func_Validate>
+                                <func_Commit>Device_Commit</func_Commit>
+                                <func_Rollback>Device_Rollback</func_Rollback>
+                            </functions> -->
+                            <objects>
+                                <object>
+                                    <name>Radio</name>
+                                    <objectType>staticTable</objectType>
+                                    <maxInstance>128</maxInstance>
+                                    <functions>
+                                        <func_GetEntryCount>MLO_Radio_GetEntryCount</func_GetEntryCount>
+                                        <func_GetEntry>MLO_Radio_GetEntry</func_GetEntry>
+                                        <!-- <func_GetParamBoolValue>Radio_GetParamBoolValue</func_GetParamBoolValue>
+                                        <func_GetParamIntValue>Radio_GetParamIntValue</func_GetParamIntValue>
+                                        <func_GetParamUlongValue>Radio_GetParamUlongValue</func_GetParamUlongValue>
+                                        <func_GetParamStringValue>Radio_GetParamStringValue</func_GetParamStringValue>
+                                        <func_SetParamBoolValue>Radio_SetParamBoolValue</func_SetParamBoolValue>
+                                        <func_SetParamIntValue>Radio_SetParamIntValue</func_SetParamIntValue>
+                                        <func_SetParamUlongValue>Radio_SetParamUlongValue</func_SetParamUlongValue>
+                                        <func_SetParamStringValue>Radio_SetParamStringValue</func_SetParamStringValue>
+                                        <func_Validate>Radio_Validate</func_Validate>
+                                        <func_Commit>Radio_Commit</func_Commit>
+                                        <func_Rollback>Radio_Rollback</func_Rollback> -->
+                                    </functions>
+                                    <parameters></parameters>
+                                    <objects>
+                                        <object>
+                                            <name>Capabilities</name>
+                                            <objectType>object</objectType>
+                                            <functions></functions>
+                                            <parameters></parameters>
+                                            <objects>
+                                                <object>
+                                                    <name>WiFi7APRole</name>
+                                                    <objectType>object</objectType>
+                                                    <functions>
+                                                        <!-- <func_GetEntryCount>WiFi7APRole_GetEntryCount</func_GetEntryCount>
+                                                        <func_GetEntry>WiFi7APRole_GetEntry</func_GetEntry> -->
+                                                        <func_GetParamBoolValue>WiFi7APRole_GetParamBoolValue</func_GetParamBoolValue>
+                                                        <func_SetParamBoolValue>WiFi7APRole_SetParamBoolValue</func_SetParamBoolValue>
+                                                        <!-- <func_Validate>WiFi7APRole_Validate</func_Validate>
+                                                        <func_Commit>WiFi7APRole_Commit</func_Commit>
+                                                        <func_Rollback>WiFi7APRole_Rollback</func_Rollback> -->
+                                                    </functions>
+                                                    <parameters>
+                                                        <parameter>
+                                                            <name>EMLMRSupport</name>
+                                                            <type>boolean</type>
+                                                            <syntax>bool</syntax>
+                                                            <writable>true</writable>
+                                                        </parameter>
+                                                        <parameter>
+                                                            <name>EMLSRSupport</name>
+                                                            <type>boolean</type>
+                                                            <syntax>bool</syntax>
+                                                            <writable>true</writable>
+                                                        </parameter>
+                                                        <parameter>
+                                                            <name>STRSupport</name>
+                                                            <type>boolean</type>
+                                                            <syntax>bool</syntax>
+                                                            <writable>true</writable>
+                                                        </parameter>
+                                                        <parameter>
+                                                            <name>NSTRSupport</name>
+                                                            <type>boolean</type>
+                                                            <syntax>bool</syntax>
+                                                            <writable>true</writable>
+                                                        </parameter>
+                                                    </parameters>
+                                                </object>
+                                                <object>
+                                                    <name>WiFi7bSTARole</name>
+                                                    <objectType>object</objectType>
+                                                    <functions>
+                                                        <!-- <func_GetEntryCount>WiFi7bSTARole_GetEntryCount</func_GetEntryCount>
+                                                        <func_GetEntry>WiFi7bSTARole_GetEntry</func_GetEntry> -->
+                                                        <func_GetParamBoolValue>WiFi7bSTARole_GetParamBoolValue</func_GetParamBoolValue>
+                                                        <func_SetParamBoolValue>WiFi7bSTARole_SetParamBoolValue</func_SetParamBoolValue>
+                                                        <!-- <func_Validate>WiFi7bSTARole_Validate</func_Validate>
+                                                        <func_Commit>WiFi7bSTARole_Commit</func_Commit>
+                                                        <func_Rollback>WiFi7bSTARole_Rollback</func_Rollback> -->
+                                                    </functions>
+                                                    <parameters>
+                                                        <parameter>
+                                                            <name>EMLMRSupport</name>
+                                                            <type>boolean</type>
+                                                            <syntax>bool</syntax>
+                                                            <writable>true</writable>
+                                                        </parameter>
+                                                        <parameter>
+                                                            <name>EMLSRSupport</name>
+                                                            <type>boolean</type>
+                                                            <syntax>bool</syntax>
+                                                            <writable>true</writable>
+                                                        </parameter>
+                                                        <parameter>
+                                                            <name>STRSupport</name>
+                                                            <type>boolean</type>
+                                                            <syntax>bool</syntax>
+                                                            <writable>true</writable>
+                                                        </parameter>
+                                                        <parameter>
+                                                            <name>NSTRSupport</name>
+                                                            <type>boolean</type>
+                                                            <syntax>bool</syntax>
+                                                            <writable>true</writable>
+                                                        </parameter>
+                                                    </parameters>
+                                                </object>
+                                            </objects>
+                                        </object>
+                                    </objects>
+                                </object>
+                                <object>
+                                    <name>APMLD</name>
+                                    <objectType>dynamicTable</objectType>
+                                    <maxInstance>128</maxInstance>
+                                    <functions>
+                                        <func_GetEntryCount>APMLD_GetEntryCount</func_GetEntryCount>
+                                        <func_GetEntry>APMLD_GetEntry</func_GetEntry>
+                                        <func_IsUpdated>APMLD_IsUpdated</func_IsUpdated>
+                                        <func_GetParamUlongValue>APMLD_GetParamUlongValue</func_GetParamUlongValue>
+                                        <func_GetParamStringValue>APMLD_GetParamStringValue</func_GetParamStringValue>
+                                        <func_SetParamUlongValue>APMLD_SetParamUlongValue</func_SetParamUlongValue>
+                                        <func_SetParamStringValue>APMLD_SetParamStringValue</func_SetParamStringValue>
+                                        <func_Validate>APMLD_Validate</func_Validate>
+                                        <func_Commit>APMLD_Commit</func_Commit>
+                                        <func_Rollback>APMLD_Rollback</func_Rollback>
+                                    </functions>
+                                    <parameters>
+                                        <parameter>
+                                            <name>MLDMACAddress</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>AffiliatedAPNumberOfEntries</name>
+                                            <type>unsignedInt</type>
+                                            <syntax>uint32</syntax>
+                                        </parameter>
+                                        <parameter>
+                                            <name>STAMLDNumberOfEntries</name>
+                                            <type>unsignedInt</type>
+                                            <syntax>uint32</syntax>
+                                        </parameter>
+                                    </parameters>
+                                    <objects>
+                                        <object>
+                                            <name>APMLDConfig</name>
+                                            <objectType>object</objectType>
+                                            <functions>
+                                                <!-- <func_GetEntryCount>APMLDConfig_GetEntryCount</func_GetEntryCount>
+                                                <func_GetEntry>APMLDConfig_GetEntry</func_GetEntry> -->
+                                                <func_GetParamBoolValue>APMLDConfig_GetParamBoolValue</func_GetParamBoolValue>
+                                                <func_SetParamBoolValue>APMLDConfig_SetParamBoolValue</func_SetParamBoolValue>
+                                                <!-- <func_Validate>APMLDConfig_Validate</func_Validate>
+                                                <func_Commit>APMLDConfig_Commit</func_Commit>
+                                                <func_Rollback>APMLDConfig_Rollback</func_Rollback> -->
+                                            </functions>
+                                            <parameters>
+                                                <parameter>
+                                                    <name>EMLMREnabled</name>
+                                                    <type>boolean</type>
+                                                    <syntax>bool</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                                <parameter>
+                                                    <name>EMLSREnabled</name>
+                                                    <type>boolean</type>
+                                                    <syntax>bool</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                                <parameter>
+                                                    <name>STREnabled</name>
+                                                    <type>boolean</type>
+                                                    <syntax>bool</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                                <parameter>
+                                                    <name>NSTREnabled</name>
+                                                    <type>boolean</type>
+                                                    <syntax>bool</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                            </parameters>
+                                        </object>
+                                        <object>
+                                            <name>AffiliatedAP</name>
+                                            <objectType>staticTable</objectType>
+                                            <maxInstance>128</maxInstance>
+                                            <functions>
+                                                <func_GetEntryCount>AffiliatedAP_GetEntryCount</func_GetEntryCount>
+                                                <func_GetEntry>AffiliatedAP_GetEntry</func_GetEntry>
+                                                <func_GetParamUlongValue>AffiliatedAP_GetParamUlongValue</func_GetParamUlongValue>
+                                                <func_GetParamStringValue>AffiliatedAP_GetParamStringValue</func_GetParamStringValue>
+                                                <func_SetParamUlongValue>AffiliatedAP_SetParamUlongValue</func_SetParamUlongValue>
+                                                <func_SetParamStringValue>AffiliatedAP_SetParamStringValue</func_SetParamStringValue>
+                                                <!-- <func_Validate>AffiliatedAP_Validate</func_Validate>
+                                                <func_Commit>AffiliatedAP_Commit</func_Commit>
+                                                <func_Rollback>AffiliatedAP_Rollback</func_Rollback> -->
+                                            </functions>
+                                            <parameters>
+                                                <parameter>
+                                                    <name>BSSID</name>
+                                                    <type>string</type>
+                                                    <syntax>string</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                                <parameter>
+                                                    <name>LinkID</name>
+                                                    <type>unsignedInt</type>
+                                                    <syntax>uint32</syntax>
+                                                </parameter>
+                                                <parameter>
+                                                    <name>DisabledSubChannels</name>
+                                                    <type>unsignedInt</type>
+                                                    <syntax>uint32</syntax>
+                                                </parameter>
+                                            </parameters>
+                                        </object>
+                                        <object>
+                                            <name>STAMLD</name>
+                                            <objectType>dynamicTable</objectType> <!-- Change it to dynamic table as AssociatedDevice - what is the difference?  -->
+                                            <maxInstance>128</maxInstance>
+                                            <functions>
+                                                <func_GetEntryCount>STAMLD_GetEntryCount</func_GetEntryCount>
+                                                <func_GetEntry>STAMLD_GetEntry</func_GetEntry>
+                                                <func_IsUpdated>STAMLD_IsUpdated</func_IsUpdated>
+                                                <func_Synchronize>STAMLD_Synchronize</func_Synchronize>
+                                                <func_GetParamStringValue>STAMLD_GetParamStringValue</func_GetParamStringValue>
+                                            </functions>
+                                            <parameters>
+                                                <parameter>
+                                                    <name>MLDMACAddress</name>
+                                                    <type>string</type>
+                                                    <syntax>string</syntax>
+                                                </parameter>
+                                            </parameters>
+                                        </object>
+                                    </objects>
+                                </object>
+                                <object>
+                                    <name>bSTAMLD</name>
+                                    <objectType>object</objectType>
+                                    <functions>
+                                        <!-- <func_GetEntryCount>bSTAMLD_GetEntryCount</func_GetEntryCount>
+                                        <func_GetEntry>bSTAMLD_GetEntry</func_GetEntry> -->
+                                        <func_GetParamStringValue>bSTAMLD_GetParamStringValue</func_GetParamStringValue>
+                                        <func_SetParamStringValue>bSTAMLD_SetParamStringValue</func_SetParamStringValue>
+                                        <!-- <func_Validate>bSTAMLD_Validate</func_Validate>
+                                        <func_Commit>bSTAMLD_Commit</func_Commit>
+                                        <func_Rollback>bSTAMLD_Rollback</func_Rollback> -->
+                                    </functions>
+                                    <parameters>
+                                        <parameter>
+                                            <name>BSSID</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>MLDMACAddress</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>AffiliatedbSTAList</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                    </parameters>
+                                    <objects>
+                                        <object>
+                                            <name>bSTAMLDConfig</name>
+                                            <objectType>object</objectType>
+                                            <functions>
+                                                <!-- <func_GetEntryCount>bSTAMLDConfig_GetEntryCount</func_GetEntryCount>
+                                                <func_GetEntry>bSTAMLDConfig_GetEntry</func_GetEntry> -->
+                                                <func_GetParamBoolValue>bSTAMLDConfig_GetParamBoolValue</func_GetParamBoolValue>
+                                                <func_SetParamBoolValue>bSTAMLDConfig_SetParamBoolValue</func_SetParamBoolValue>
+                                                <!-- <func_Validate>bSTAMLDConfig_Validate</func_Validate>
+                                                <func_Commit>bSTAMLDConfig_Commit</func_Commit>
+                                                <func_Rollback>bSTAMLDConfig_Rollback</func_Rollback> -->
+                                            </functions>
+                                            <parameters>
+                                                <parameter>
+                                                    <name>EMLMREnabled</name>
+                                                    <type>boolean</type>
+                                                    <syntax>bool</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                                <parameter>
+                                                    <name>EMLSREnabled</name>
+                                                    <type>boolean</type>
+                                                    <syntax>bool</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                                <parameter>
+                                                    <name>STREnabled</name>
+                                                    <type>boolean</type>
+                                                    <syntax>bool</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                                <parameter>
+                                                    <name>NSTREnabled</name>
+                                                    <type>boolean</type>
+                                                    <syntax>bool</syntax>
+                                                    <writable>true</writable>
+                                                </parameter>
+                                            </parameters>
+                                        </object>
+                                    </objects>
+                                </object>
+                            </objects>
+                        </object>
+                    </objects>
+                </object>
+            </objects>
+        </object>
+        <object>
             <name>X_RDKCENTRAL-COM_GASConfig</name>
             <objectType>dynamicTable</objectType>
             <maxInstance>256</maxInstance>

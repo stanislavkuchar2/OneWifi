@@ -1742,6 +1742,7 @@ webconfig_error_t encode_associated_client_object(rdk_wifi_vap_info_t *rdk_vap_i
     if (associated_devices_lock != NULL) {
         pthread_mutex_lock(associated_devices_lock);
     }
+    {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "assoclist_type %d \n",assoclist_type ); fflush(out);fclose(out);}
     switch (assoclist_type)  {
         case assoclist_type_full:
             devices_map = rdk_vap_info->associated_devices_map;
@@ -1778,10 +1779,18 @@ webconfig_error_t encode_associated_client_object(rdk_wifi_vap_info_t *rdk_vap_i
                 cJSON_AddItemToArray(obj_array, obj_assoc_client);
 
                 char mac_string[18] = {0};
+                mac_addr_str_t mld_mac_str = { 0 };
 
                 to_mac_str(assoc_dev_data->dev_stats.cli_MACAddress, mac_string);
+                to_mac_str(assoc_dev_data->dev_stats.cli_MLDAddr, mld_mac_str);
                 str_tolower(mac_string);
+                str_tolower(mld_mac_str);
+                {FILE *out = fopen("/tmp/log12.txt", "a"); fprintf(out, "encode %s %d \n",
+                    mld_mac_str, assoc_dev_data->dev_stats.cli_MLDEnable); fflush(out);fclose(out);}
+
                 cJSON_AddStringToObject(obj_assoc_client, "MACAddress", mac_string);
+                cJSON_AddStringToObject(obj_assoc_client, "MLDAddr", mld_mac_str);
+                cJSON_AddBoolToObject(obj_assoc_client, "MLDEnable", assoc_dev_data->dev_stats.cli_MLDEnable);
                 cJSON_AddStringToObject(obj_assoc_client, "WpaKeyMgmt", assoc_dev_data->conn_security.wpa_key_mgmt);
                 cJSON_AddStringToObject(obj_assoc_client, "PairwiseCipher", assoc_dev_data->conn_security.pairwise_cipher);
                 cJSON_AddBoolToObject(obj_assoc_client, "AuthenticationState", assoc_dev_data->dev_stats.cli_AuthenticationState);
