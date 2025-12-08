@@ -377,12 +377,9 @@ WiFi7APRole_GetParamBoolValue
 
     *  APMLD_GetEntryCount
     *  APMLD_GetEntry
-    *  APMLD_GetParamUlongValue
-    *  APMLD_GetParamStringValue
     *  APMLD_IsUpdated
-    *  APMLD_Validate
-    *  APMLD_Commit
-    *  APMLD_Rollback
+    *  APMLD_Synchronize
+    *  APMLD_GetParamStringValue
 
 ***********************************************************************/
 /**********************************************************************  
@@ -414,9 +411,8 @@ APMLD_GetEntryCount
     )
 {
     UNREFERENCED_PARAMETER(hInsContext);
-
-    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: total number of apmld:%d\n",__func__, __LINE__, get_total_num_apmld_dml());
-    return get_total_num_apmld_dml();
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: Number of APMLD:%d\n",__func__, __LINE__, get_num_apmld_dml());
+    return get_num_apmld_dml();
 }
 
 /**********************************************************************  
@@ -457,24 +453,17 @@ APMLD_GetEntry
         ULONG*                      pInsNumber
     )
 {
-    wifi_util_info_print(WIFI_DMCLI, "%s:%d APMLD_GetEntry called\n", __func__, __LINE__);
-
     UNREFERENCED_PARAMETER(hInsContext);
 
-    char mld_id_map[MLD_UNIT_COUNT] = {0};
-
-    int count;
-    create_mld_map(mld_id_map, &count);
-
-    if (nIndex >= 0 && nIndex <= (UINT)get_total_num_apmld_dml()) {
+    if (nIndex < (UINT)get_num_apmld_dml()) {
         *pInsNumber = nIndex + 1;
 
-        wifi_util_info_print(WIFI_DMCLI, "%s:%d APMLD_GetEntry ended good\n", __func__, __LINE__);
+        wifi_util_dbg_print(WIFI_DMCLI, "%s:%d nIndex:%lu succeeded\n", __func__, __LINE__, nIndex);
 
-        return (ANSC_HANDLE)(ULONG)(mld_id_map[nIndex]+1);
+        return (ANSC_HANDLE)(mld_group_t *)get_dml_apmld_group(nIndex);
     }
 
-    wifi_util_info_print(WIFI_DMCLI, "%s:%d APMLD_GetEntry ended with error\n", __func__, __LINE__);
+    wifi_util_error_print(WIFI_DMCLI, "%s:%d nIndex:%lu failed\n", __func__, __LINE__, nIndex);
 
     return NULL;
 }
@@ -518,40 +507,34 @@ APMLD_IsUpdated
 
     prototype:
 
-        BOOL
-        APMLD_GetParamUlongValue
+        ULONG
+        STAMLD_Synchronize
             (
-                ANSC_HANDLE                 hInsContext,
-                char*                       ParamName,
-                ULONG*                      puLong
+                ANSC_HANDLE                 hInsContext
             );
 
     description:
 
-        This function is called to retrieve ULONG parameter value;
+        This function is called to synchronize the table.
 
     argument:   ANSC_HANDLE                 hInsContext,
                 The instance handle;
 
-                char*                       ParamName,
-                The parameter name;
-
-                ULONG*                      puLong
-                The buffer of returned ULONG value;
-
-    return:     TRUE if succeeded.
+    return:     The status of the operation.
 
 **********************************************************************/
-BOOL
-APMLD_GetParamUlongValue
+ULONG
+APMLD_Synchronize
     (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        ULONG*                      puLong
+        ANSC_HANDLE                 hInsContext
     )
 {
+    UNREFERENCED_PARAMETER(hInsContext);
+    wifi_util_dbg_print(WIFI_DMCLI, "%s:%d APMLD_Synchronize called\n", __func__, __LINE__);
 
-    return FALSE;
+    update_apmld_map();
+
+    return ANSC_STATUS_SUCCESS;
 }
 
 /**********************************************************************
@@ -601,135 +584,33 @@ APMLD_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
-
-    ULONG apmld_index = (ULONG)hInsContext - 1;
+    mld_group_t *mld_group = (mld_group_t *)hInsContext;
 
     if (AnscEqualString(ParamName, "MLDMACAddress", TRUE)) {
-        mac_address_t mld_mac = { 0 };
         mac_addr_str_t mld_mac_str = { 0 };
-        if (get_mld_addr_by_id(apmld_index, &mld_mac) == 0) {
-            to_mac_str(mld_mac, mld_mac_str);
-            if (AnscSizeOfString(mld_mac_str) < *pUlSize) {
-                wifi_util_dbg_print(WIFI_DMCLI, "%s:%d MLDADDR: %s apmld_index %u\n", __FUNCTION__, __LINE__, mld_mac_str, apmld_index);
-                AnscCopyString(pValue, mld_mac_str);
-                return 0;
-            }
+        wifi_vap_info_t *vap = mld_group->mld_vaps[0];
+        
+        /* All affiliated APs share the same MLD MAC address */
+        if (isVapMesh(vap->vap_index)) {
+            wifi_util_error_print(WIFI_DMCLI, "%s:%d MLD MAC Address is not applicable for Mesh VAP\n", __FUNCTION__, __LINE__);
+            return -1;
+        }
+        to_mac_str(vap->u.bss_info.mld_info.common_info.mld_addr, mld_mac_str);
+        wifi_util_dbg_print(WIFI_DMCLI, "%s:%d mld id:%u has %s MLDMACAddress\n", __FUNCTION__,
+            __LINE__, 0, mld_mac_str);
+
+
+        if (AnscSizeOfString(mld_mac_str) < *pUlSize) {
+            AnscCopyString(pValue, mld_mac_str);
+            return 0;
+        } else {
             *pUlSize = AnscSizeOfString(mld_mac_str) + 1;
             return 1;
         }
-        wifi_util_dbg_print(WIFI_DMCLI, "%s:%d failed to obtain mld_addr for mld_id %u\n", __FUNCTION__, __LINE__, apmld_index);
-        return -1;
+        return 0;
     }
 
     return -1;
-}
-
-/**********************************************************************
-
-    caller:     owner of this object
-
-    prototype:
-
-        BOOL
-        APMLD_Validate
-            (
-                ANSC_HANDLE                 hInsContext,
-                char*                       pReturnParamName,
-                ULONG*                      puLength
-            );
-
-    description:
-
-        This function is called to finally commit all the update.
-
-    argument:   ANSC_HANDLE                 hInsContext,
-                The instance handle;
-
-                char*                       pReturnParamName,
-                The buffer (128 bytes) of parameter name if there's a validation.
-
-                ULONG*                      puLength
-                The output length of the param name.
-
-    return:     TRUE if there's no validation.
-
-**********************************************************************/
-BOOL
-APMLD_Validate
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       pReturnParamName,
-        ULONG*                      puLength
-    )
-{
-    UNREFERENCED_PARAMETER(hInsContext);
-    UNREFERENCED_PARAMETER(pReturnParamName);
-    UNREFERENCED_PARAMETER(puLength);
-    return TRUE;
-}
-
-/**********************************************************************
-
-    caller:     owner of this object
-
-    prototype:
-
-        ULONG
-        APMLD_Commit
-            (
-                ANSC_HANDLE                 hInsContext
-            );
-
-    description:
-
-        This function is called to finally commit all the update.
-
-    argument:   ANSC_HANDLE                 hInsContext,
-                The instance handle;
-
-    return:     The status of the operation.
-
-**********************************************************************/
-ULONG
-APMLD_Commit
-    (
-        ANSC_HANDLE                 hInsContext
-    )
-{
-    return TRUE; 
-}
-
-/**********************************************************************
-
-    caller:     owner of this object
-
-    prototype:
-
-        ULONG
-        APMLD_Rollback
-            (
-                ANSC_HANDLE                 hInsContext
-            );
-
-    description:
-
-        This function is called to roll back the update whenever there's a
-        validation found.
-
-    argument:   ANSC_HANDLE                 hInsContext,
-                The instance handle;
-
-    return:     The status of the operation.
-
-**********************************************************************/
-ULONG
-APMLD_Rollback
-    (
-        ANSC_HANDLE                 hInsContext
-    )
-{
-    UNREFERENCED_PARAMETER(hInsContext);
-    return ANSC_STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -840,27 +721,13 @@ AffiliatedAP_GetEntryCount
         ANSC_HANDLE                 hInsContext
     )
 {
-    wifi_util_info_print(WIFI_DMCLI, "%s:%d AffiliatedAP_GetEntryCount called\n", __func__, __LINE__);
     UNREFERENCED_PARAMETER(hInsContext);
-    //ULONG mld_id = (ULONG)hInsContext;
+    mld_group_t *mld_group = (mld_group_t *)hInsContext;
 
-    return get_total_num_affiliated_ap_dml(0);//TODO: here shuld be passed vap_info ptr
-}
-
-static int get_vap_in_mld(unsigned int mld_id, unsigned int vap_id)
-{
-    switch (vap_id)
-    {
-        case 1:
-        case 2:
-            return mld_id * 2 + vap_id - 1;
-        case 3:
-            return mld_id + 16;
-        default:
-            return -1;
-    }
-
-    return -1;
+    UINT count = get_total_num_affiliated_ap_dml(mld_group);
+    
+    wifi_util_dbg_print(WIFI_DMCLI, "%s:%d Number of AffiliatedAP:%d\n", __func__, __LINE__, count);
+    return count;
 }
 
 /**********************************************************************
@@ -901,15 +768,15 @@ AffiliatedAP_GetEntry
         ULONG*                      pInsNumber
     )
 {
-    ULONG apmld_index = (ULONG)hInsContext - 1;
-    ULONG vap_index = get_vap_in_mld(apmld_index, nIndex + 1);
+    mld_group_t *mld_group = (mld_group_t *)hInsContext;
 
-    if ( nIndex >= 0 && nIndex <= (UINT)get_total_num_affiliated_ap_dml(0) )
+    if ( nIndex >= 0 && nIndex < (UINT)get_total_num_affiliated_ap_dml(mld_group) )
     {
         *pInsNumber = nIndex + 1;
+        return (ANSC_HANDLE)(mld_group->mld_vaps[nIndex]);
     }
 
-    return (ANSC_HANDLE)(vap_index + 1);
+    return NULL;
 }
 
 /**********************************************************************
@@ -950,9 +817,7 @@ AffiliatedAP_GetParamUlongValue
         ULONG*                      puLong
     )
 {
-    ULONG vap_index = (ULONG)hInsContext - 1;
-
-    wifi_vap_info_t *vap = (wifi_vap_info_t *)get_dml_vap_parameters(vap_index);
+    wifi_vap_info_t *vap = (wifi_vap_info_t *)hInsContext;
 
     if (vap == NULL) {
         wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: vap is NULL\n", __func__, __LINE__);
@@ -961,10 +826,8 @@ AffiliatedAP_GetParamUlongValue
 
     if (AnscEqualString(ParamName, "LinkID", TRUE))
     {
-        if (isVapSTAMesh(vap_index))
-        {
-            *puLong = vap->u.sta_info.mld_info.common_info.mld_link_id;
-            return TRUE;
+        if (isVapSTAMesh(vap->vap_index)) {
+            return FALSE;
         }
         *puLong = vap->u.bss_info.mld_info.common_info.mld_link_id;
         return TRUE;
@@ -1026,8 +889,7 @@ AffiliatedAP_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
-    ULONG vap_index = (ULONG)hInsContext - 1;
-    wifi_vap_info_t *vap = (wifi_vap_info_t *)get_dml_vap_parameters(vap_index);
+    wifi_vap_info_t *vap = (wifi_vap_info_t *)hInsContext;
 
     if (vap == NULL) {
         wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: vap is NULL\n", __func__, __LINE__);
