@@ -2014,3 +2014,25 @@ bool wifi_factory_reset(bool factory_reset_all_vaps)
     wifi_util_info_print(WIFI_DMCLI,"Exit %s:%d \n",__func__, __LINE__);
     return TRUE;
 }
+
+ULONG get_num_fronthaul_vaps()
+{
+    ULONG count = 0;
+    wifi_mgr_t *g_wifi_mgr = get_wifimgr_obj();
+
+    for (int i = 0; i < MAX_NUM_RADIOS; ++i)
+    {
+        wifi_vap_info_t *vaps = g_wifi_mgr->radio_config[i].vaps.vap_map.vap_array;
+
+        for (int j = 0; j < MAX_NUM_VAP_PER_RADIO; ++j)
+        {
+            wifi_vap_info_t *vap_info = &vaps[j];
+            if (!isVapSTAMesh(vap_info->vap_index))
+            {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
