@@ -87,11 +87,11 @@ extern "C" {
 #define MAX_NUM_MLD_LINKS 15
 #endif /*MAX_NUM_MLD_LINKS*/
 
-#ifdef CONFIG_NO_MLD_ONLY_PRIVATE
+//#ifdef CONFIG_NO_MLD_ONLY_PRIVATE
 #define MLD_UNIT_COUNT 8
 #else
 #define MLD_UNIT_COUNT 1
-#endif /* CONFIG_NO_MLD_ONLY_PRIVATE */
+//#endif /* CONFIG_NO_MLD_ONLY_PRIVATE */
 
 
 #define PLAN_ID_LENGTH     38
