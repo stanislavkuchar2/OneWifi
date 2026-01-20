@@ -88,7 +88,7 @@ extern "C" {
 #endif /*MAX_NUM_MLD_LINKS*/
 
 #define UNDEFINED_MLD_ID 255
-
+#define CONFIG_NO_MLD_ONLY_PRIVATE
 #ifdef CONFIG_NO_MLD_ONLY_PRIVATE
 #define MLD_UNIT_COUNT 8
 #else
