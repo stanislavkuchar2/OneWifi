@@ -65,6 +65,38 @@
 #ifndef  _COSA_WIFI_DML_H
 #define  _COSA_WIFI_DML_H
 
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.Radio.{i}.
+
+    *  Device_GetEntryCount
+    *  Device_GetEntry
+    *  Device_GetParamBoolValue
+
+***********************************************************************/
+ULONG
+Device_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    );
+
+ANSC_HANDLE
+Device_GetEntry
+    (
+        ANSC_HANDLE hInsContext,
+        ULONG nIndex, 
+        ULONG *pInsNumber
+    );
+
+BOOL
+Device_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    );
 
 /***********************************************************************
 
@@ -286,6 +318,78 @@ ULONG
 STAMLD_Synchronize
     (
         ANSC_HANDLE                 hInsContext
+    );
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.SSID.{i}.
+
+    *  DataElements_SSID_GetEntryCount
+    *  DataElements_SSID_GetEntry
+    *  DataElements_SSID_GetParamBoolValue
+    *  DataElements_SSID_GetParamStringValue
+
+***********************************************************************/
+ULONG
+DataElements_SSID_GetEntryCount
+    (
+        ANSC_HANDLE hInsContext,
+        ULONG nIndex,
+        ULONG *pInsNumber
+    );
+
+ANSC_HANDLE
+DataElements_SSID_GetEntry
+    (
+        ANSC_HANDLE hInsContext,
+        ULONG nIndex,
+        ULONG *pInsNumber
+    );
+
+ULONG
+DataElements_SSID_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    );
+
+BOOL
+DataElements_SSID_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    );
+
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.Device.{i}.bSTAMLD.bSTAMLDConfig.
+
+    *  bSTAMLDConfig_GetParamBoolValue
+    *  bSTAMLDConfig_SetParamBoolValue
+
+***********************************************************************/
+BOOL
+bSTAMLDConfig_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    );
+
+BOOL
+bSTAMLDConfig_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
     );
 
 /***********************************************************************

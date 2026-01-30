@@ -382,18 +382,25 @@
                             <functions>
                                 <func_GetEntryCount>Device_GetEntryCount</func_GetEntryCount>
                                 <func_GetEntry>Device_GetEntry</func_GetEntry>
+                                <func_GetParamBoolValue>Device_GetParamBoolValue</func_GetParamBoolValue>
                             </functions>
                             <parameters>
-                                    <parameter>
-                                        <name>RadioNumberOfEntries</name>
-                                        <type>unsignedInt</type>
-                                        <syntax>uint32</syntax>
-                                    </parameter>
-                                    <parameter>
-                                        <name>APMLDNumberOfEntries</name>
-                                        <type>unsignedInt</type>
-                                        <syntax>uint32</syntax>
-                                    </parameter>
+                                <parameter>
+                                    <name>RadioNumberOfEntries</name>
+                                    <type>unsignedInt</type>
+                                    <syntax>uint32</syntax>
+                                </parameter>
+                                <parameter>
+                                    <name>APMLDNumberOfEntries</name>
+                                    <type>unsignedInt</type>
+                                    <syntax>uint32</syntax>
+                                </parameter>
+                                <parameter>
+                                    <name>DFSEnable</name>
+                                    <type>boolean</type>
+                                    <syntax>bool</syntax>
+                                    <writable>false</writable>
+                                </parameter>
                             </parameters>
                                <objects>
                                 <object>
@@ -553,6 +560,49 @@
                                     </objects>
                                 </object>
                             </objects>
+                        </object>
+                        <object>
+                            <name>SSID</name>
+                            <objectType>staticTable</objectType>
+                            <maxInstance>128</maxInstance>
+                            <functions>
+                                <func_GetEntryCount>DataElements_SSID_GetEntryCount</func_GetEntryCount>
+                                <func_GetEntry>DataElements_SSID_GetEntry</func_GetEntry>
+                                <func_GetParamBoolValue>DataElements_SSID_GetParamBoolValue</func_GetParamBoolValue>
+                                <func_GetParamStringValue>DataElements_SSID_GetParamStringValue</func_GetParamStringValue>
+                            </functions>
+                            <parameters>
+                            <parameter>
+                                <name>SSID</name>
+                                <type>string(32)</type>
+                                <syntax>string</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>Enable</name>
+                                <type>boolean</type>
+                                <syntax>bool</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>Band</name>
+                                <type>string(32)</type>
+                                <syntax>string</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>HaulType</name>
+                                <type>string(32)</type>
+                                <syntax>string</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <!-- <parameter>
+                                <name>MobilityDomain</name>
+                                <type>string(32)</type>
+                                <syntax>string</syntax>
+                                <writable>true</writable>
+                            </parameter> -->
+                            </parameters>
                         </object>
                     </objects>
                 </object>

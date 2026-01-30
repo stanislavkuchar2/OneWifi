@@ -1193,10 +1193,11 @@ STAMLD_GetParamStringValue
 
  APIs for Object:
 
-    Device.WiFi.DataElements.Network.Device.{i}.
+    Device.WiFi.DataElements.Network.Device.{i}.Radio.{i}.
 
     *  Device_GetEntryCount
     *  Device_GetEntry
+    *  Device_GetParamBoolValue
 
 ***********************************************************************/
 /**********************************************************************
@@ -1232,7 +1233,7 @@ Device_GetEntryCount
 #ifdef CONFIG_IEEE80211BE
     return 1;
 #else
-    return 0;
+    return 1; // should be 0
 #endif
 
 }
@@ -1268,7 +1269,12 @@ Device_GetEntryCount
 
 **********************************************************************/
 ANSC_HANDLE
-Device_GetEntry(ANSC_HANDLE hInsContext, ULONG nIndex, ULONG *pInsNumber)
+Device_GetEntry
+    (
+        ANSC_HANDLE hInsContext,
+        ULONG nIndex, 
+        ULONG *pInsNumber
+    )
 {
     UNREFERENCED_PARAMETER(hInsContext);
     wifi_util_dbg_print(WIFI_DMCLI, "%s:%d: nIndex:%ld\n", __func__, __LINE__, nIndex);
@@ -1276,6 +1282,345 @@ Device_GetEntry(ANSC_HANDLE hInsContext, ULONG nIndex, ULONG *pInsNumber)
     *pInsNumber = nIndex + 1;
     return (ANSC_HANDLE) (*pInsNumber);
 }
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        Device_GetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL*                       pBool
+            );
+
+    description:
+
+        This function is called to retrieve Boolean parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                BOOL*                       pBool
+                The buffer of returned boolean value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+Device_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+    if (AnscEqualString(ParamName, "DFSEnable", TRUE))
+    {
+        wifi_rfc_dml_parameters_t *rfc_pcfg = (wifi_rfc_dml_parameters_t *)get_wifi_db_rfc_parameters();
+        *pBool = rfc_pcfg->dfs_rfc;
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.WiFi.DataElements.Network.SSID.{i}.
+
+    *  DataElements_SSID_GetEntryCount
+    *  DataElements_SSID_GetEntry
+    *  DataElements_SSID_GetParamBoolValue
+    *  DataElements_SSID_GetParamStringValue
+
+***********************************************************************/
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ULONG
+        DataElements_SSID_GetEntryCount
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to retrieve the count of the table.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The count of the table
+
+**********************************************************************/
+ULONG
+DataElements_SSID_GetEntryCount
+    (
+        ANSC_HANDLE hInsContext,
+        ULONG nIndex,
+        ULONG *pInsNumber
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+    
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: total number of fronthaul vaps:%d get_total_num_vap_dml():%d\n",__func__, __LINE__, get_num_fronthaul_vaps() * MAX_NUM_VAP_PER_RADIO, get_num_fronthaul_vaps());
+    return get_num_fronthaul_vaps();
+}
+
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ANSC_HANDLE
+        DataElements_SSID_GetEntry
+            (
+                ANSC_HANDLE                 hInsContext,
+                ULONG                       nIndex,
+                ULONG*                      pInsNumber
+            );
+
+    description:
+
+        This function is called to retrieve the entry specified by the index.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                ULONG                       nIndex,
+                The index of this entry;
+
+                ULONG*                      pInsNumber
+                The output instance number;
+
+    return:     The handle to identify the entry
+
+**********************************************************************/
+ANSC_HANDLE
+DataElements_SSID_GetEntry
+    (
+        ANSC_HANDLE hInsContext,
+        ULONG nIndex,
+        ULONG *pInsNumber
+    )
+{
+    UNREFERENCED_PARAMETER(hInsContext);
+    wifi_vap_info_t *vapInfo = NULL;
+
+    wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: get_total_num_vap_dml():%d nIndex:%d\n",__func__, __LINE__, get_total_num_vap_dml(), nIndex);
+    if (nIndex >= 0 && nIndex <= (UINT)get_total_num_vap_dml())
+    {
+        UINT vapIndex = VAP_INDEX(((webconfig_dml_t *)get_webconfig_dml())->hal_cap, nIndex);
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: nIndex:%d -> vapIndex:%d\n", __func__, __LINE__, nIndex, vapIndex);
+        vapInfo = (wifi_vap_info_t *) get_dml_vap_parameters(vapIndex);
+        if(vapInfo == NULL)
+        {
+            wifi_util_dbg_print(WIFI_DMCLI,"%s:%d: get_dml_vap_parameters == NULL nIndex:%d vapIndex:%d\n",__func__, __LINE__, nIndex, vapIndex);
+        }
+        *pInsNumber = vapIndex + 1;
+    }
+    last_vap_change = AnscGetTickInSeconds(); 
+    return (ANSC_HANDLE) vapInfo;
+}
+
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        ULONG
+        DataElements_SSID_GetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pValue,
+                ULONG*                      pUlSize
+            );
+
+    description:
+
+        This function is called to retrieve string parameter value; 
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       pValue,
+                The string value buffer;
+
+                ULONG*                      pUlSize
+                The buffer of length of string value;
+                Usually size of 1023 will be used.
+                If it's not big enough, put required size here and return 1;
+
+    return:     0 if succeeded;
+                1 if short of buffer size; (*pUlSize = required size)
+                -1 if not supported.
+
+**********************************************************************/
+ULONG
+DataElements_SSID_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    wifi_vap_info_t *pcfg = (wifi_vap_info_t *)hInsContext;
+
+    if (pcfg == NULL)
+    {
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d Null pointer get fail\n", __FUNCTION__,__LINE__);
+        return FALSE;
+    }
+
+    if( AnscEqualString(ParamName, "SSID", TRUE))
+    {
+        if(!isVapSTAMesh(pcfg->vap_index)) {
+            AnscCopyString(pValue, pcfg->u.bss_info.ssid);
+            return 0;
+        }
+    }
+
+    if( AnscEqualString(ParamName, "Band", TRUE))
+    {
+        if(!isVapSTAMesh(pcfg->vap_index)) {
+            char* value = (char *)radio_index_to_radio_type_str(pcfg->radio_index);
+            AnscCopyString(pValue, value);
+            return 0;
+        }
+    }
+
+    if (AnscEqualString(ParamName, "HaulType", TRUE))
+    {
+        wifi_util_dbg_print(WIFI_DMCLI, "vap_name='%s' vap_index=%d\n", pcfg->vap_name, pcfg->vap_index);
+
+        if (!isVapSTAMesh(pcfg->vap_index)) {
+            if (!strncmp(pcfg->vap_name, "private_ssid", strlen("private_ssid")))
+                AnscCopyString(pValue, "FrontHaul");
+            else if (!strncmp(pcfg->vap_name, "hotspot", strlen("hotspot")))
+                AnscCopyString(pValue, "Hotspot");
+            else if (!strncmp(pcfg->vap_name, "iot_ssid", strlen("iot_ssid")))
+                AnscCopyString(pValue, "IoT Type");
+            else if (!strncmp(pcfg->vap_name, "lnf_psk", strlen("lnf_psk")))
+                AnscCopyString(pValue, "Configurator Type");
+            else if (!strncmp(pcfg->vap_name, "mesh_backhaul", strlen("mesh_backhaul")) ||
+                    !strncmp(pcfg->vap_name, "mesh_sta", strlen("mesh_sta")))
+                AnscCopyString(pValue, "BackHaul");
+            else
+                AnscCopyString(pValue, "Unknown");
+        } else {
+            AnscCopyString(pValue, "Unknown");
+        }
+
+        *pUlSize = AnscSizeOfString(pValue);
+        return 0;
+    }
+
+    return FALSE;
+}
+
+/**********************************************************************  
+
+    caller:     owner of this object 
+
+    prototype: 
+
+        BOOL
+        DataElements_SSID_GetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL*                       pBool
+            );
+
+    description:
+
+        This function is called to retrieve Boolean parameter value; 
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                BOOL*                       pBool
+                The buffer of returned boolean value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+DataElements_SSID_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+    ULONG vap_index = 0;
+    wifi_vap_info_t *pcfg = (wifi_vap_info_t *)hInsContext;
+
+    if (pcfg == NULL)
+    {
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d Null pointer get fail\n", __FUNCTION__,__LINE__);
+        return FALSE;
+    }
+
+    wifi_global_config_t *global_wifi_config;
+    global_wifi_config = (wifi_global_config_t*) get_dml_cache_global_wifi_config();
+    if (global_wifi_config == NULL)
+    {
+        wifi_util_dbg_print(WIFI_DMCLI,"%s:%d Unable to get Global Config\n", __FUNCTION__,__LINE__);
+        return FALSE;
+    }
+
+    vap_index = convert_vap_name_to_index(&((webconfig_dml_t *)get_webconfig_dml())->hal_cap.wifi_prop, pcfg->vap_name);
+    dml_vap_default *cfg = (dml_vap_default *) get_vap_default(vap_index);
+
+    if(cfg == NULL) {
+            wifi_util_dbg_print(WIFI_DMCLI,"%s:%d Null pointer get fail\n", __FUNCTION__,__LINE__);
+            return FALSE;
+    }
+    /* check the parameter name and return the corresponding value */
+    if( AnscEqualString(ParamName, "Enable", TRUE))
+    {
+        if (global_wifi_config->global_parameters.force_disable_radio_feature == TRUE)
+        {
+            *pBool = FALSE;
+            return TRUE;
+        }
+
+        if (isVapSTAMesh(pcfg->vap_index)) {
+            *pBool = pcfg->u.sta_info.enabled;
+            return TRUE;
+        }
+        *pBool = pcfg->u.bss_info.enabled;
+        return TRUE;
+    }
+
+    /* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
+    return FALSE;
+}
+
 
 /***********************************************************************
 
