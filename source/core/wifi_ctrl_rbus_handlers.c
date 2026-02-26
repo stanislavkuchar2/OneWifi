@@ -405,12 +405,16 @@ int notify_LM_Lite(wifi_ctrl_t *ctrl, LM_wifi_hosts_t *phosts, bool sync)
     }
 
     if (sync) {
+        //TODO: Put it under compilation flag
+        //snprintf(str, sizeof(str), "%s,%s,%s,%d,%d,%d", (char *)phosts->host[0].phyAddr,
         snprintf(str, sizeof(str), "%s,%s,%s,%d,%d", (char *)phosts->host[0].phyAddr,
             ('\0' != phosts->host[0].AssociatedDevice[0]) ?
                 (char *)phosts->host[0].AssociatedDevice :
                 "NULL",
             ('\0' != phosts->host[0].ssid[0]) ? (char *)phosts->host[0].ssid : "NULL",
             phosts->host[0].RSSI, (phosts->host[0].Status == TRUE) ? 1 : 0);
+            //phosts->host[0].RSSI, (phosts->host[0].Status == TRUE) ? 1 : 0, phosts->host[0].mld_enabled);
+            wifi_util_error_print(WIFI_CTRL, "%s:%d: Stano notify_LM_Lite sync: %d str: %s\n", __func__, __LINE__, sync, str);
 
         rc = get_bus_descriptor()->bus_set_string_fn(&ctrl->handle, WIFI_LMLITE_NOTIFY, str);
         if (rc != bus_error_success) {
@@ -420,12 +424,13 @@ int notify_LM_Lite(wifi_ctrl_t *ctrl, LM_wifi_hosts_t *phosts, bool sync)
         }
     } else {
         for (itr = 0; itr < phosts->count; itr++) {
-            snprintf(str, sizeof(str), "%s,%s,%s,%d,%d", (char *)phosts->host[itr].phyAddr,
+            //TODO: put it under config
+            snprintf(str, sizeof(str), "%s,%s,%s,%d,%d,%d", (char *)phosts->host[itr].phyAddr,
                 ('\0' != phosts->host[itr].AssociatedDevice[0]) ?
                     (char *)phosts->host[itr].AssociatedDevice :
                     "NULL",
                 ('\0' != phosts->host[itr].ssid[0]) ? (char *)phosts->host[0].ssid : "NULL",
-                phosts->host[itr].RSSI, (phosts->host[itr].Status == TRUE) ? 1 : 0);
+                phosts->host[itr].RSSI, (phosts->host[itr].Status == TRUE) ? 1 : 0, phosts->host[itr].mld_enabled);
 
             rc = get_bus_descriptor()->bus_set_string_fn(&ctrl->handle, WIFI_LMLITE_NOTIFY, str);
             if (rc != bus_error_success) {

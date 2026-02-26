@@ -1041,12 +1041,18 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
     hash_map_t *sta_map = NULL;
     sta_data_t *sta_data = NULL;
     sta_key_t sta_key;
+    mac_address_t zero_mac = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
     getVAPArrayIndexFromVAPIndex((unsigned int)assoc_dev_data->ap_index, &vap_array_index);
     pthread_mutex_lock(&g_monitor_module.data_lock);
     sta_map = g_monitor_module.bssid_data[vap_array_index].sta_map;
     memset(sta_key, 0, STA_KEY_LEN);
-    to_sta_key(assoc_dev_data->dev_stats.cli_MACAddress, sta_key);
+    //to_sta_key(assoc_dev_data->dev_stats.cli_MACAddress, sta_key);
+    if (memcmp(assoc_dev_data->dev_stats.cli_MLDAddr, zero_mac, sizeof(mac_address_t)) == 0) {
+        to_sta_key(assoc_dev_data->dev_stats.cli_MACAddress, sta_key);
+    } else {
+        to_sta_key(assoc_dev_data->dev_stats.cli_MLDAddr, sta_key);
+    }
 
     str_tolower(sta_key);
 
@@ -1064,6 +1070,8 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
     assoc_dev_data->dev_stats.cli_Retransmissions = sta_data->dev_stats.cli_Retransmissions;
     assoc_dev_data->dev_stats.cli_Active = sta_data->dev_stats.cli_Active;
     memcpy(assoc_dev_data->dev_stats.cli_MLDAddr, sta_data->dev_stats.cli_MLDAddr, sizeof(mac_address_t));
+    memcpy(assoc_dev_data->dev_stats.cli_MACAddress, sta_data->dev_stats.cli_MACAddress, sizeof(mac_address_t));
+
     memcpy(assoc_dev_data->dev_stats.cli_OperatingStandard, sta_data->dev_stats.cli_OperatingStandard, sizeof(char)*64);
     memcpy(assoc_dev_data->dev_stats.cli_OperatingChannelBandwidth, sta_data->dev_stats.cli_OperatingChannelBandwidth, sizeof(char)*64);
     assoc_dev_data->dev_stats.cli_SNR = sta_data->dev_stats.cli_SNR;
@@ -3357,7 +3365,7 @@ int device_associated(int ap_index, wifi_associated_dev_t *associated_dev)
     snprintf(assoc_data.dev_stats.cli_OperatingStandard, sizeof(assoc_data.dev_stats.cli_OperatingStandard),"%s", associated_dev->cli_OperatingStandard);
     snprintf(assoc_data.dev_stats.cli_OperatingChannelBandwidth, sizeof(assoc_data.dev_stats.cli_OperatingChannelBandwidth),"%s", associated_dev->cli_OperatingChannelBandwidth);
     snprintf(assoc_data.dev_stats.cli_InterferenceSources, sizeof(assoc_data.dev_stats.cli_InterferenceSources),"%s", associated_dev->cli_InterferenceSources);
-
+    assoc_data.dev_stats.cli_MLDEnable = true;//TODO: Stano: Add cli_MLDEnable to wifi_associated_dev_t struct and set it to true in case links data are present when client connects
     frame = &assoc_data.sta_data.msg_data;
     if (frame->frame.len != 0) {
         parse_assoc_ies((uint8_t *)(frame->data + ASSOC_REQ_MAC_HEADER_LEN),

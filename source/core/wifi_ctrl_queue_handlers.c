@@ -2145,7 +2145,12 @@ void process_assoc_device_event(void *data)
     str_tolower(mac_str);
 
     //check and remove mac_str from other vaps if device is steering
-    check_and_remove_mac_on_other_vaps(rdk_vap_info, assoc_data);
+    wifi_util_info_print(WIFI_CTRL,"%s:%d:Stano mld_enable %d \n", __func__, __LINE__, assoc_data->dev_stats.cli_MLDEnable);
+    if (!assoc_data->dev_stats.cli_MLDEnable) {
+        //remove STA from other VAP only in case non MLO connected STA
+        //In case of MLO connected STA is expected that client will be present on multiple VAPS
+        check_and_remove_mac_on_other_vaps(rdk_vap_info, assoc_data);
+    }
 
     tmp_assoc_dev_data = hash_map_get(rdk_vap_info->associated_devices_map, mac_str);
     if (tmp_assoc_dev_data == NULL) {
