@@ -1041,12 +1041,17 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
     hash_map_t *sta_map = NULL;
     sta_data_t *sta_data = NULL;
     sta_key_t sta_key;
+    mac_address_t zero_mac = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
     getVAPArrayIndexFromVAPIndex((unsigned int)assoc_dev_data->ap_index, &vap_array_index);
     pthread_mutex_lock(&g_monitor_module.data_lock);
     sta_map = g_monitor_module.bssid_data[vap_array_index].sta_map;
     memset(sta_key, 0, STA_KEY_LEN);
-    to_sta_key(assoc_dev_data->dev_stats.cli_MACAddress, sta_key);
+    if (memcmp(assoc_dev_data->dev_stats.cli_MLDAddr, zero_mac, sizeof(mac_address_t)) == 0) {
+        to_sta_key(assoc_dev_data->dev_stats.cli_MACAddress, sta_key);
+    } else {
+        to_sta_key(assoc_dev_data->dev_stats.cli_MLDAddr, sta_key);
+    }
 
     str_tolower(sta_key);
 
@@ -1064,6 +1069,7 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
     assoc_dev_data->dev_stats.cli_Retransmissions = sta_data->dev_stats.cli_Retransmissions;
     assoc_dev_data->dev_stats.cli_Active = sta_data->dev_stats.cli_Active;
     memcpy(assoc_dev_data->dev_stats.cli_MLDAddr, sta_data->dev_stats.cli_MLDAddr, sizeof(mac_address_t));
+    memcpy(assoc_dev_data->dev_stats.cli_MACAddress, sta_data->dev_stats.cli_MACAddress, sizeof(mac_address_t));
     memcpy(assoc_dev_data->dev_stats.cli_OperatingStandard, sta_data->dev_stats.cli_OperatingStandard, sizeof(char)*64);
     memcpy(assoc_dev_data->dev_stats.cli_OperatingChannelBandwidth, sta_data->dev_stats.cli_OperatingChannelBandwidth, sizeof(char)*64);
     assoc_dev_data->dev_stats.cli_SNR = sta_data->dev_stats.cli_SNR;
@@ -1413,22 +1419,18 @@ void process_deauthenticate	(unsigned int ap_index, auth_deauth_dev_t *dev)
     process_disconnect(ap_index, dev);
 }
 
-void process_connect(unsigned int ap_index, auth_deauth_dev_t *dev)
+sta_data_t *process_connect_add_sta(unsigned int ap_index, auth_deauth_dev_t *dev)
 {
     sta_key_t sta_key;
     sta_data_t *sta;
     hash_map_t *sta_map;
     struct timespec tv_now, t_diff, t_tmp;
-    unsigned int i = 0;
-    int vap_status = 0;
-    wifi_mgr_t *mgr = get_wifimgr_obj();
     unsigned int vap_array_index;
     getVAPArrayIndexFromVAPIndex(ap_index, &vap_array_index);
 
-    pthread_mutex_lock(&g_monitor_module.data_lock);
     sta_map = g_monitor_module.bssid_data[vap_array_index].sta_map;
-    wifi_util_info_print(WIFI_MON, "sta map: %p Device:%s connected on ap:%d\n", sta_map,
-        to_sta_key(dev->sta_mac, sta_key), ap_index);
+    wifi_util_info_print(WIFI_MON, "%s:%d sta map: %p Device:%s connected on ap:%d\n", __func__, __LINE__,
+        sta_map, to_sta_key(dev->sta_mac, sta_key), ap_index);
     to_sta_key(dev->sta_mac, sta_key);
     str_tolower(sta_key);
     sta = (sta_data_t *)hash_map_get(sta_map, sta_key);
@@ -1437,8 +1439,7 @@ void process_connect(unsigned int ap_index, auth_deauth_dev_t *dev)
         if (sta == NULL) {
             wifi_util_error_print(WIFI_MON, "%s:%d malloc allocation failure\r\n", __func__,
                 __LINE__);
-            pthread_mutex_unlock(&g_monitor_module.data_lock);
-            return;
+            return NULL;
         }
         memset(sta, 0, sizeof(sta_data_t));
         memcpy(sta->sta_mac, dev->sta_mac, sizeof(mac_addr_t));
@@ -1466,7 +1467,7 @@ void process_connect(unsigned int ap_index, auth_deauth_dev_t *dev)
         sta->assoc_monitor_start_time = tv_now.tv_sec;
 
     if ((UINT)(tv_now.tv_sec - sta->last_disconnected_time.tv_sec) <=
-        g_monitor_module.bssid_data[i].ap_params.rapid_reconnect_threshold) {
+        g_monitor_module.bssid_data[vap_array_index].ap_params.rapid_reconnect_threshold) {//Stano: here was before g_monitor_module.bssid_data[i].ap_params.rapid_reconnect_threshold !!!
         if (sta->dev_stats.cli_Active == false) {
             wifi_util_dbg_print(WIFI_MON,
                 "Device:%s connected on ap:%d connected within rapid reconnect time\n",
@@ -1495,8 +1496,21 @@ void process_connect(unsigned int ap_index, auth_deauth_dev_t *dev)
     sta->dev_stats.cli_Active = true;
     sta->connection_authorized = true;
 
-    /*To avoid duplicate entries in hash map of different vAPs eg:RDKB-21582
-      Also when clients moved away from a vAP and connect back to other vAP this will be usefull*/
+    return sta;
+}
+
+/*To avoid duplicate entries in hash map of different vAPs eg:RDKB-21582
+    Also when clients moved away from a vAP and connect back to other vAP this will be usefull*/
+void process_connect_remove_duplicates(unsigned int ap_index, auth_deauth_dev_t *dev)
+{
+    unsigned int i = 0;
+    int vap_status = 0;
+    wifi_mgr_t *mgr = get_wifimgr_obj();
+    hash_map_t *sta_map;
+    sta_key_t sta_key;
+    sta_data_t *sta;
+
+
     for (i = 0; i < getTotalNumberVAPs(); i++) {
         UINT vap_index = VAP_INDEX(mgr->hal_cap, i);
         UINT radio = RADIO_INDEX(mgr->hal_cap, i);
@@ -1517,6 +1531,40 @@ void process_connect(unsigned int ap_index, auth_deauth_dev_t *dev)
             } else if ((sta != NULL) && (sta->connection_authorized == true)) {
                 sta->connection_authorized = false;
             }
+        }
+    }
+}
+
+void process_connect(unsigned int ap_index, auth_deauth_dev_t *dev)
+{
+    sta_data_t *sta = NULL;
+
+    wifi_util_info_print(WIFI_MON, "%s:%d process_connect start ap_index %d mld sta: %d\n",
+        __func__,__LINE__, ap_index, dev->mld_info.cli_MLDSta);
+
+    pthread_mutex_lock(&g_monitor_module.data_lock);
+    process_connect_remove_duplicates(ap_index, dev);
+    if (dev->mld_info.cli_MLDSta == true) {
+        for (int link_idx = 0; link_idx < MAX_NUM_RADIOS; link_idx++) {
+            if (dev->mld_info.cli_LinkInfo[link_idx].cli_Valid) {
+                UINT link_vap_index = dev->mld_info.cli_LinkInfo[link_idx].cli_VapIndex;
+                sta = process_connect_add_sta(link_vap_index, dev);
+                if (sta == NULL) {
+                    wifi_util_error_print(WIFI_MON, "%s:%d Add STA failed!\r\n", __func__, __LINE__);
+                    pthread_mutex_unlock(&g_monitor_module.data_lock);
+                    return;
+                }
+                sta->dev_stats.cli_RSSI = dev->mld_info.cli_LinkInfo[link_idx].cli_RSSI;
+                sta->primary_link = dev->mld_info.cli_LinkInfo[link_idx].cli_IsAssocLink;
+                wifi_util_info_print(WIFI_MON, "%s:%d Added mld sta %p to vap_index %d\n", __func__,__LINE__, sta, ap_index);
+            }
+        }
+    } else {
+        sta = process_connect_add_sta(ap_index, dev);
+        if (sta == NULL) {
+            wifi_util_error_print(WIFI_MON, "%s:%d Add STA failed!\r\n", __func__, __LINE__);
+            pthread_mutex_unlock(&g_monitor_module.data_lock);
+            return;
         }
     }
     pthread_mutex_unlock(&g_monitor_module.data_lock);
@@ -3308,15 +3356,9 @@ int device_associated(int ap_index, wifi_associated_dev_t *associated_dev)
 
     data->ap_index = ap_index;
     //data->u.dev.reason = reason;
-
-    data->u.dev.sta_mac[0] = associated_dev->cli_MACAddress[0]; data->u.dev.sta_mac[1] = associated_dev->cli_MACAddress[1];
-    data->u.dev.sta_mac[2] = associated_dev->cli_MACAddress[2]; data->u.dev.sta_mac[3] = associated_dev->cli_MACAddress[3];
-    data->u.dev.sta_mac[4] = associated_dev->cli_MACAddress[4]; data->u.dev.sta_mac[5] = associated_dev->cli_MACAddress[5];
-
-    wifi_util_info_print(WIFI_MON, "%s:%d:Device associated on interface:%d mac:%02x:%02x:%02x:%02x:%02x:%02x\n",
-            __func__, __LINE__, ap_index,
-            data->u.dev.sta_mac[0], data->u.dev.sta_mac[1], data->u.dev.sta_mac[2],
-            data->u.dev.sta_mac[3], data->u.dev.sta_mac[4], data->u.dev.sta_mac[5]);
+    memcpy(data->u.dev.sta_mac, associated_dev->cli_MACAddress, sizeof(mac_address_t));
+    wifi_util_info_print(WIFI_MON, "%s:%d:Device associated on interface:%d mac: " MACSTR " \n",
+            __func__, __LINE__, ap_index, MAC2STR(data->u.dev.sta_mac));
 
 
     convert_vap_index_to_name(&((wifi_mgr_t *)get_wifimgr_obj())->hal_cap.wifi_prop, ap_index, vap_name);
@@ -3357,7 +3399,12 @@ int device_associated(int ap_index, wifi_associated_dev_t *associated_dev)
     snprintf(assoc_data.dev_stats.cli_OperatingStandard, sizeof(assoc_data.dev_stats.cli_OperatingStandard),"%s", associated_dev->cli_OperatingStandard);
     snprintf(assoc_data.dev_stats.cli_OperatingChannelBandwidth, sizeof(assoc_data.dev_stats.cli_OperatingChannelBandwidth),"%s", associated_dev->cli_OperatingChannelBandwidth);
     snprintf(assoc_data.dev_stats.cli_InterferenceSources, sizeof(assoc_data.dev_stats.cli_InterferenceSources),"%s", associated_dev->cli_InterferenceSources);
-
+    assoc_data.dev_stats.cli_MLDEnable = associated_dev->cli_MLDInfo.cli_MLDSta;
+    if (assoc_data.dev_stats.cli_MLDEnable) {
+        memcpy(&assoc_data.mld_info, &associated_dev->cli_MLDInfo, sizeof(wifi_mld_sta_info_t));
+        memcpy(&data->u.dev.mld_info, &associated_dev->cli_MLDInfo, sizeof(wifi_mld_sta_info_t));
+    }
+    //Stano TODO: assoc_data.dev_stats.cli_MLDPrimaryLink = associated_dev->cli_MLDInfo.cli_mld_primary_link;
     frame = &assoc_data.sta_data.msg_data;
     if (frame->frame.len != 0) {
         parse_assoc_ies((uint8_t *)(frame->data + ASSOC_REQ_MAC_HEADER_LEN),

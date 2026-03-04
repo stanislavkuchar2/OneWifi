@@ -1870,6 +1870,13 @@ webconfig_error_t encode_associated_client_object(rdk_wifi_vap_info_t *rdk_vap_i
                 to_mac_str(assoc_dev_data->dev_stats.cli_MACAddress, mac_string);
                 str_tolower(mac_string);
                 cJSON_AddStringToObject(obj_assoc_client, "MACAddress", mac_string);
+
+                mac_addr_str_t mld_mac_str = { 0 };
+                to_mac_str(assoc_dev_data->dev_stats.cli_MLDAddr, mld_mac_str);
+                str_tolower(mld_mac_str);
+                cJSON_AddStringToObject(obj_assoc_client, "MLDAddr", mld_mac_str);
+                cJSON_AddBoolToObject(obj_assoc_client, "MLDEnable", assoc_dev_data->dev_stats.cli_MLDEnable);
+                cJSON_AddBoolToObject(obj_assoc_client, "cli_MLDPrimaryLink", assoc_dev_data->dev_stats.cli_MLDPrimaryLink);
                 cJSON_AddStringToObject(obj_assoc_client, "WpaKeyMgmt", assoc_dev_data->conn_security.wpa_key_mgmt);
                 cJSON_AddStringToObject(obj_assoc_client, "PairwiseCipher", assoc_dev_data->conn_security.pairwise_cipher);
                 cJSON_AddBoolToObject(obj_assoc_client, "AuthenticationState", assoc_dev_data->dev_stats.cli_AuthenticationState);

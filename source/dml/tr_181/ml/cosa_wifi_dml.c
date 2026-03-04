@@ -16790,9 +16790,22 @@ AssociatedDevice1_GetParamStringValue
     
     if( AnscEqualString(ParamName, "MACAddress", TRUE))
     {
-        char p_mac[18];
-        snprintf(p_mac, 18, "%02x:%02x:%02x:%02x:%02x:%02x", assoc_dev_data->dev_stats.cli_MACAddress[0], assoc_dev_data->dev_stats.cli_MACAddress[1], assoc_dev_data->dev_stats.cli_MACAddress[2],
-                   assoc_dev_data->dev_stats.cli_MACAddress[3], assoc_dev_data->dev_stats.cli_MACAddress[4], assoc_dev_data->dev_stats.cli_MACAddress[5]);
+        mac_addr_str_t  p_mac1;
+        mac_addr_str_t  p_mac2;
+
+    {FILE *out = fopen("/tmp/log12.txt", "a");
+        fprintf(out, "Stano DM MACAddress MAC: %s / %s\n",
+            to_mac_str(assoc_dev_data->dev_stats.cli_MACAddress, p_mac1),
+            to_mac_str(assoc_dev_data->dev_stats.cli_MLDAddr, p_mac2));
+            fflush(out);fclose(out);}
+        mac_addr_str_t  p_mac;
+        mac_address_t   zero_mac = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        if (memcmp(assoc_dev_data->dev_stats.cli_MLDAddr, zero_mac, sizeof(mac_address_t)) == 0) {
+            to_mac_str(assoc_dev_data->dev_stats.cli_MACAddress, p_mac);
+        } else {
+            to_mac_str(assoc_dev_data->dev_stats.cli_MLDAddr, p_mac);
+        }
         if ( AnscSizeOfString(p_mac) < *pUlSize)
         {
             AnscCopyString(pValue, p_mac);

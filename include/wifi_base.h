@@ -221,6 +221,7 @@ typedef struct {
     mac_address_t  sta_mac;
     int        reason;
     wifi_associated_dev3_t dev_stats;
+    wifi_mld_sta_info_t mld_info;
 } auth_deauth_dev_t;
 
 #define MAX_MQTT_TOPIC_LEN 256
@@ -898,6 +899,7 @@ typedef struct {
     client_state_t client_state;
     conn_security_t conn_security;
     assoc_req_elem_t sta_data;
+    wifi_mld_sta_info_t mld_info;
 } __attribute__((__packed__)) assoc_dev_data_t;
 
 struct active_msmt_data;
