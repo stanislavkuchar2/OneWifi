@@ -1858,6 +1858,7 @@ void process_wifi_host_sync()
             pthread_mutex_unlock(rdk_vap_info->associated_devices_lock);
         }
     }
+    wifi_util_error_print(WIFI_CTRL, "%s:%d: Stano 1 notify _LM_Lite host_sync - sync: %d\n", __func__, __LINE__, 0);
     if (notify_LM_Lite(&p_wifi_mgr->ctrl, &hosts, false) != RETURN_OK) {
         wifi_util_error_print(WIFI_CTRL,"%s:%d Unable to send notification to LMLite", __func__, __LINE__);
     }
@@ -1894,6 +1895,7 @@ void lm_notify_disassoc(assoc_dev_data_t *assoc_dev_data, unsigned int vap_index
         }
     } else if ((isVapPrivate(vap_index)) || (isVapXhs(vap_index))) {
         //Code to Publish to LMLite
+        wifi_util_error_print(WIFI_CTRL, "%s:%d: Stano 2 notify _LM_Lite deassoc - sync: %d\n", __func__, __LINE__, 1);
         if (notify_LM_Lite(&p_wifi_mgr->ctrl, &hosts, true) != RETURN_OK) {
             wifi_util_error_print(WIFI_CTRL,"%s:%d Unable to send notification to LMLite", __func__, __LINE__);
         }
@@ -2009,6 +2011,7 @@ void process_disassoc_device_event(void *data)
             assoc_dev_data_t *temp = hash_map_remove(rdk_vap_info->associated_devices_map, 
                                                       temp_mac_str);
             if (temp != NULL) {
+                wifi_util_info_print(WIFI_CTRL,"%s:%d:Stano 11x1 \n", __func__, __LINE__);
                 if (process_device_removal(rdk_vap_info, temp_mac_str, temp, 
                                           p_wifi_mgr, &new_count, old_count) == RETURN_ERR) {
                     pthread_mutex_unlock(rdk_vap_info->associated_devices_lock);
@@ -2026,6 +2029,7 @@ void process_disassoc_device_event(void *data)
         assoc_dev_data_t *temp = hash_map_remove(rdk_vap_info->associated_devices_map, 
                                                   mac_str);
         if (temp != NULL) {
+            wifi_util_info_print(WIFI_CTRL,"%s:%d:Stano 11x2 \n", __func__, __LINE__);
             if (process_device_removal(rdk_vap_info, mac_str, temp, 
                                       p_wifi_mgr, &new_count, old_count) == RETURN_ERR) {
                 pthread_mutex_unlock(rdk_vap_info->associated_devices_lock);
@@ -2248,6 +2252,7 @@ void process_assoc_device_event(void *data)
             }
             hosts.host[0].RSSI = assoc_data->dev_stats.cli_RSSI;
             hosts.host[0].mld_sta = assoc_data->dev_stats.cli_MLDEnable;
+            wifi_util_error_print(WIFI_CTRL, "%s:%d: Stano 3 notify _LM_Lite Assoc event\n", __func__, __LINE__);
             if (notify_LM_Lite(&p_wifi_mgr->ctrl, &hosts, true) != RETURN_OK) {
                 wifi_util_error_print(WIFI_CTRL,"%s:%d Unable to send notification to LMLite\n", __func__, __LINE__);
             }

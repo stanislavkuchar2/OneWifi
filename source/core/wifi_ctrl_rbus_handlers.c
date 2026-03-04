@@ -420,7 +420,7 @@ int notify_LM_Lite(wifi_ctrl_t *ctrl, LM_wifi_hosts_t *phosts, bool sync)
 
         rc = get_bus_descriptor()->bus_set_string_fn(&ctrl->handle, WIFI_LMLITE_NOTIFY, str);
         if (rc != bus_error_success) {
-            wifi_util_error_print(WIFI_CTRL, "%s:%d: bus: Write Failed %d\n", __func__, __LINE__,
+            wifi_util_error_print(WIFI_CTRL, "%s:%d: bus: Stano Write Failed!!!!!!!!!!!!!! %d\n", __func__, __LINE__,
                 rc);
             return RETURN_ERR;
         }
@@ -439,12 +439,13 @@ int notify_LM_Lite(wifi_ctrl_t *ctrl, LM_wifi_hosts_t *phosts, bool sync)
 #endif
             rc = get_bus_descriptor()->bus_set_string_fn(&ctrl->handle, WIFI_LMLITE_NOTIFY, str);
             if (rc != bus_error_success) {
-                wifi_util_error_print(WIFI_CTRL, "%s:%d: bus: Write Failed %d\n", __func__,
+                wifi_util_error_print(WIFI_CTRL, "%s:%d: bus: Stano Write Failed %d\n", __func__,
                     __LINE__, rc);
                 return RETURN_ERR;
             }
         }
     }
+    wifi_util_error_print(WIFI_CTRL, "%s:%d: Stano notify_LM_Lite sync: %d mld_sta: %d str: %s\n", __func__, __LINE__, sync, phosts->host[0].mld_sta, str);
     return RETURN_OK;
 }
 
@@ -1340,7 +1341,7 @@ char *get_assoc_devices_blob()
     int itr, itrj;
     wifi_mgr_t *mgr = (wifi_mgr_t *)get_wifimgr_obj();
     wifi_ctrl_t *ctrl = (wifi_ctrl_t *)get_wifictrl_obj();
-
+    wifi_util_error_print(WIFI_CTRL, "%s:%d: Stano-2 get_assoc_devices_blob \n", __func__, __LINE__);
     if ((mgr == NULL) || (ctrl == NULL)) {
         wifi_util_error_print(WIFI_CTRL, "%s:%d NULL pointers\n", __func__, __LINE__);
         return NULL;

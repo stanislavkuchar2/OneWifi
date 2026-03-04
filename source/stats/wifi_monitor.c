@@ -1063,6 +1063,10 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
         return -1;
     }
 
+    {FILE *out = fopen("/tmp/log12.txt", "a");
+        fprintf(out, "%s:%d: get_assoc_devices_blob()->get_sta_stats_info() cli_MACAddress " MACSTR " / mld MAC " MACSTR "\n", __func__, __LINE__,
+            MAC2STR(sta_data->dev_stats.cli_MACAddress), MAC2STR(sta_data->dev_stats.cli_MLDAddr));
+        fflush(out);fclose(out);}
     assoc_dev_data->dev_stats.cli_AuthenticationState = sta_data->dev_stats.cli_AuthenticationState;
     assoc_dev_data->dev_stats.cli_LastDataDownlinkRate = sta_data->dev_stats.cli_LastDataDownlinkRate;
     assoc_dev_data->dev_stats.cli_LastDataUplinkRate = sta_data->dev_stats.cli_LastDataUplinkRate;
@@ -1095,6 +1099,12 @@ int get_sta_stats_info (assoc_dev_data_t *assoc_dev_data) {
     assoc_dev_data->dev_stats.cli_MultipleRetryCount = sta_data->dev_stats.cli_MultipleRetryCount;
     assoc_dev_data->dev_stats.cli_MLDEnable = sta_data->dev_stats.cli_MLDEnable;
     memcpy(&assoc_dev_data->sta_data, &sta_data->assoc_frame_data, sizeof(assoc_req_elem_t));
+
+        mac_addr_str_t     mac_str;
+        to_mac_str(sta_data->link_mac, mac_str);
+        mac_addr_str_t     mld_mac_str;
+        to_mac_str(sta_data->sta_mac, mld_mac_str);
+        wifi_util_error_print(WIFI_DMCLI,"Stanoxx2 Link MAC:%s/MLD MAC:%s AP index: %d\n",mac_str, mld_mac_str, assoc_dev_data->ap_index);
 
     pthread_mutex_unlock(&g_monitor_module.data_lock);
     return 0;
