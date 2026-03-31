@@ -813,6 +813,16 @@ int webconfig_event_levl(wifi_app_t *apps, wifi_event_subtype_t sub_type, void *
 
 int hal_event_levl(wifi_app_t *app, wifi_event_subtype_t sub_type, void *data)
 {
+    mac_addr_str_t mac_str = { 0 };
+    frame_data_t *msg = (frame_data_t *)data;
+
+    if (msg) {
+        struct ieee80211_mgmt *frame;
+        frame = (struct ieee80211_mgmt *)msg->data;
+        char *str = to_mac_str(frame->sa, mac_str);
+        wifi_util_dbg_print(WIFI_APPS,"%s:%d MLO_TEST: ap_index:%d length:%d type:%d dir:%d src mac:%s rssi:%d\r\n",
+                __FUNCTION__, __LINE__, msg->frame.ap_index, msg->frame.len, msg->frame.type, msg->frame.dir, str, msg->frame.sig_dbm);
+    }
     switch (sub_type) {
     case wifi_event_hal_probe_req_frame:
         apps_probe_req_frame_event(app, data);
