@@ -44,7 +44,10 @@ unsigned int startTime[MAX_NUM_RADIOS];
 #define BUF_SIZE              256
 extern webconfig_error_t webconfig_ctrl_apply(webconfig_subdoc_t *doc, webconfig_subdoc_data_t *data);
 void get_action_frame_evt_params(uint8_t *frame, uint32_t len, frame_data_t *mgmt_frame, wifi_event_subtype_t *evt_subtype);
-
+int set_bus_bool_param(bus_handle_t *handle, const char *paramNames, bool data_value);
+#if defined(CONFIG_IEEE80211BE) && !defined(CONFIG_GENERIC_MLO)
+static void update_rfc_mlo_enable(bool force_update);
+#endif
 static void ctrl_queue_timeout_scheduler_tasks(wifi_ctrl_t *ctrl);
 static int pending_states_webconfig_analyzer(void *arg);
 static int bus_check_and_subscribe_events(void* arg);
@@ -1903,7 +1906,9 @@ int start_wifi_ctrl(wifi_ctrl_t *ctrl)
 
     /* start wifi apps */
     wifi_hal_platform_post_init();
-
+#if defined(CONFIG_IEEE80211BE) && !defined(CONFIG_GENERIC_MLO)
+    update_rfc_mlo_enable(true);
+#endif
     if (monitor_ret == 0) {
         //Start Wifi Monitor Thread
         start_wifi_health_monitor_thread();
@@ -3275,6 +3280,77 @@ UINT getNumberVAPsPerRadio(UINT radioIndex)
 }
 
 #if defined(CONFIG_IEEE80211BE) && !defined(CONFIG_GENERIC_MLO)
+/**
+ * Helper function to set a bus boolean parameter with retry logic.
+ * @param handle - CCSP bus handle
+ * @param param_name - Parameter name to set
+ * @param param_value - Boolean value to set
+ * @return 0 on success, non-zero on failure after all retries
+ */
+static int set_bus_bool_param_with_retry(void *handle, const char *param_name, bool param_value)
+{
+    int ret, retry = 0;
+    
+    do {
+        ret = set_bus_bool_param(handle, param_name, param_value);
+        if (ret != 0) {
+            wifi_util_info_print(WIFI_CTRL, "%s:%d: %s ret=%d, retrying...\n", 
+                __FUNCTION__, __LINE__, param_name, ret);
+            sleep(1);
+        }
+    } while (ret != 0 && ++retry < 5);
+    
+    if (ret != 0) {
+        wifi_util_error_print(WIFI_CTRL, "%s:%d: Failed to update %s after %d retries\n", 
+            __FUNCTION__, __LINE__, param_name, retry);
+    } else {
+        wifi_util_info_print(WIFI_CTRL, "%s:%d: Parameter %s updated to %s\n",
+            __FUNCTION__, __LINE__, param_name, param_value ? "true" : "false");
+    }
+    
+    return ret;
+}
+/**
+ * Update the MLO RFC enable status based on the current VAP configurations.
+ * This function checks all radios and their VAPs to determine if any VAP has a
+ * valid MLD ID and updates the corresponding MLO RFC enable status.
+ * @param force_update - true when it is being called from the bootup path, 
+ *                      false when it is being called from the vap config update path
+ */
+static void update_rfc_mlo_enable(bool init)
+{
+    wifi_mgr_t *wifi_mgr = get_wifimgr_obj();
+    bool mlo_rfc_enable = false;
+    static bool last_mlo_rfc_enable = false;
+    unsigned int i, j;
+
+    for (i = 0; i < getNumberRadios(); i++) {
+        for (j = 0; j < getNumberVAPsPerRadio(i); j++) {
+            wifi_vap_info_t *vap = &wifi_mgr->radio_config[i].vaps.vap_map.vap_array[j];
+            if (vap == NULL) {
+                continue;
+            }
+            if (isVapSTAMesh(vap->vap_index)) {
+                continue;
+            }
+            //check if mld_id(MLDUnit) is valid
+            if (vap->u.bss_info.mld_info.common_info.mld_id < MLD_UNIT_COUNT) {
+                mlo_rfc_enable = true;
+                break;
+            }
+        }
+        if (mlo_rfc_enable) {
+            break;
+        }
+    }
+
+    if (init || mlo_rfc_enable != last_mlo_rfc_enable) {
+        set_bus_bool_param_with_retry(&wifi_mgr->ctrl.handle, WIFI_NETWORKDEVICESSTATUS_MLORFCENABLE, mlo_rfc_enable);
+        set_bus_bool_param_with_retry(&wifi_mgr->ctrl.handle, WIFI_INTERFACEDEVICESWIFI_MLORFCENABLE, mlo_rfc_enable);
+        last_mlo_rfc_enable = mlo_rfc_enable;
+    }
+}
+
 /* A radio is MLO-capable only if it is enabled, not in EcoPowerDown, and running 802.11be. */
 static bool is_radio_mlo_capable(unsigned int radio_index)
 {
@@ -3588,7 +3664,10 @@ unsigned int update_mld_groups(webconfig_subdoc_decoded_data_t *data,
             }
         }
     }
-
+    //update_rfc_mlo_enable only if data is not NULL (webconfig path), bootup scenario is handled in part of post_init
+    if (data != NULL) {
+        update_rfc_mlo_enable(false);
+    }
     return radio_bitmap;
 }
 
