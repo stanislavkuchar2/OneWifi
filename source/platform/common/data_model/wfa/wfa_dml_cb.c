@@ -331,6 +331,29 @@ bus_error_t wfa_network_ssid_get_param_value(void *obj_ins_context, char *param_
     }
 }
 
+bus_error_t wfa_device_get_param_value(void *obj_ins_context, char *param_name, raw_data_t *p_data)
+{
+    (void)obj_ins_context;
+    
+    if (param_name == NULL) {
+        wifi_util_info_print(WIFI_DMCLI, "%s:%d: param name is NULL\n", __func__, __LINE__);
+        return bus_error_invalid_input;
+    }
+
+    wifi_util_info_print(WIFI_DMCLI, "%s:%d: param name:%s\n", __func__, __LINE__, param_name);
+
+    if (STR_CMP(param_name, "APMLDNumberOfEntries")) {
+        uint32_t num_apmld = get_num_apmld_dml();
+        return set_output_value(param_name, p_data, &num_apmld);
+    } else if (STR_CMP(param_name, "RadioNumberOfEntries")) {
+        uint32_t num_radios = getNumberRadios();
+        return set_output_value(param_name, p_data, &num_radios);
+    } else {
+        wifi_util_info_print(WIFI_DMCLI, "%s:%d: unsupported param name:%s\n", __func__, __LINE__, param_name);
+        return bus_error_invalid_input;
+    }
+}
+
 bus_error_t wfa_apmld_get_param_value(void *obj_ins_context, char *param_name, raw_data_t *p_data)
 {
     mld_group_t *mld_grp = obj_ins_context;

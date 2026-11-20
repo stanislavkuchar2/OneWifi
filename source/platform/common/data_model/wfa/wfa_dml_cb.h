@@ -44,6 +44,16 @@ bool wfa_network_get_param_value(void *obj_ins_context, char *param_name, raw_da
  */
 bus_error_t wfa_network_ssid_get_param_value(void *obj_ins_context, char *param_name, raw_data_t *p_data);
 
+/**
+ * @brief Get parameter value for WFA Device
+ * 
+ * @param obj_ins_context Object instance context (not used for Device level)
+ * @param param_name Parameter name to retrieve
+ * @param p_data Pointer to raw data object
+ * @return bus_error_success on success, error code on failure
+ */
+bus_error_t wfa_device_get_param_value(void *obj_ins_context, char *param_name, raw_data_t *p_data);
+
 bus_error_t wfa_apmld_get_param_value(void *obj_ins_context, char *param_name, raw_data_t *p_data);
 
 bus_error_t wfa_stamld_get_param_value(void *obj_ins_context, char *param_name, raw_data_t *p_data);
